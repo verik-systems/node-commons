@@ -25,11 +25,11 @@ wrapMethods.forEach(item => {
     const stringifyAble = data instanceof Error
       ? {
         // Pull all enumerable properties, supporting properties on custom Errors
-        ...data,
-        // Explicitly pull Error's non-enumerable properties
-        name: data.name,
-        message: data.message
-      }
+          ...data,
+          // Explicitly pull Error's non-enumerable properties
+          name: data.name,
+          message: data.message
+        }
       : data
 
     this.pinoLogger[item]({
