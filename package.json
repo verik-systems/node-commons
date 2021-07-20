@@ -15,5 +15,10 @@
   "bugs": {
     "url": "https://gitlab.com/veriksystems/node-commons/issues"
   },
-  "homepage": "https://gitlab.com/veriksystems/node-commons#readme"
+  "homepage": "https://gitlab.com/veriksystems/node-commons#readme",
+  "dependencies": {
+    "chai": "^4.3.4",
+    "mocha": "^9.0.2",
+    "uuid": "^8.3.2"
+  }
 }
