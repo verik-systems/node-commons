@@ -4,7 +4,9 @@
   "description": "Verik Nodejs common libs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "standard --env mocha",
+    "lint-fix": "standard --env mocha --fix",
+    "test": "mocha tests/*.js"
   },
   "repository": {
     "type": "git",
@@ -15,5 +17,12 @@
   "bugs": {
     "url": "https://gitlab.com/veriksystems/node-commons/issues"
   },
-  "homepage": "https://gitlab.com/veriksystems/node-commons#readme"
+  "homepage": "https://gitlab.com/veriksystems/node-commons#readme",
+  "dependencies": {
+    "chai": "^4.3.4",
+    "mocha": "^9.0.2",
+    "pino": "^6.12.0",
+    "standard": "^16.0.3",
+    "uuid": "^8.3.2"
+  }
 }
