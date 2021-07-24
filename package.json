@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "standard --env mocha",
     "lint-fix": "standard --env mocha --fix",
-    "test": "mocha tests/*.js"
+    "test": "mocha tests/*/*.js"
   },
   "repository": {
     "type": "git",

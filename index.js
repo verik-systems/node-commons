@@ -1,6 +1,10 @@
 'use strict'
 
 module.exports = {
-  log: require('./log'),
-  requestId: require('./request-id')
+  middlewares: {
+    requestId: require('./middlewares/requestId')
+  },
+  libs: {
+    log: require('./libs/log')
+  }
 }

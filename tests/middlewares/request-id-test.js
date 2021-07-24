@@ -1,6 +1,6 @@
 'use strict'
 
-const requestId = require('../request-id')
+const requestId = require('../../middlewares/request-id')
 const expect = require('chai').expect
 
 describe('request-id', function () {
