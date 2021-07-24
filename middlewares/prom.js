@@ -91,4 +91,8 @@ function metricsMiddleware (userOption = {}) {
   })
 }
 
-module.exports = metricsMiddleware
+module.exports = {
+  metricsMiddleware,
+  normalizeStatusCode,
+  requestDurationGenerator
+}

@@ -2,7 +2,8 @@
 
 module.exports = {
   middlewares: {
-    requestId: require('./middlewares/requestId')
+    requestId: require('./middlewares/requestId'),
+    prom: require('./middlewares/prom').metricsMiddleware
   },
   libs: {
     log: require('./libs/log'),
