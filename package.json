@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "standard --env mocha",
     "lint-fix": "standard --env mocha --fix",
-    "test": "mocha tests/*.js"
+    "test": "mocha tests/*/*.js"
   },
   "repository": {
     "type": "git",
@@ -19,10 +19,16 @@
   },
   "homepage": "https://gitlab.com/veriksystems/node-commons#readme",
   "dependencies": {
-    "chai": "^4.3.4",
-    "mocha": "^9.0.2",
     "pino": "^6.12.0",
-    "standard": "^16.0.3",
+    "prom-client": "^13.1.0",
+    "response-time": "^2.3.2",
     "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "express": "^4.17.1",
+    "mocha": "^9.0.2",
+    "standard": "^16.0.3",
+    "supertest": "^6.1.4"
   }
 }
