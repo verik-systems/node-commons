@@ -39,5 +39,19 @@ describe('metricsMiddleware', () => {
   })
 
   it('should record a metric', async () => {
+    const app = express()
+    const metricsMiddleware = promMiddleware.metricsMiddleware({})
+    app.use((req, res, next) => {
+      req.prom = { route: 'foo.bar' }
+      next()
+    })
+    app.use(metricsMiddleware)
+
+    app.use('/test', (req, res) => { res.send('it works') })
+
+    const agent = supertest(app)
+    await agent.get('/test')
+    const metrics = await Prometheus.register.metrics()
+    expect(metrics).to.contains('http_request_duration_seconds_bucket{le="+Inf",route="foo.bar",method="GET",status="2xx"}')
   })
 })
