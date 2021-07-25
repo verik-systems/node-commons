@@ -35,15 +35,18 @@ function promEnable (app, promRemoteMethodRouteMap, ignoreModels) {
     modelNames.push(modelName)
   })
 
+  const injectReqProm = async function (ctx) {
+    const route = promRemoteMethodRouteMap[ctx.req.remotingContext.methodString]
+    if (route) {
+      ctx.req.prom = { route }
+    }
+  }
+
   modelNames.forEach(modelName => {
     const model = app.models[modelName]
 
-    model.beforeRemote('**', async (ctx) => {
-      const route = promRemoteMethodRouteMap[ctx.req.remotingContext.methodString]
-      if (route) {
-        ctx.req.prom = { route }
-      }
-    })
+    model.afterRemote('**', injectReqProm)
+    model.afterRemoteError('**', injectReqProm)
   })
 }
 
