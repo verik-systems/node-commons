@@ -19,5 +19,4 @@ release:
     - npm config set @veriksystems:registry https://gitlab.com/api/v4/projects/28236778/packages/npm/
     - npm publish
   only:
-    - master
     - tags
