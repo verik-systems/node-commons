@@ -112,6 +112,22 @@ function metricsMiddleware (userOption = {}) {
     options.prefix
   )
 
+  const requestLength = options.requestLengthEnabled
+    ? requestLengthGenerator(
+        options.customLabels,
+        options.requestLengthBuckets,
+        options.prefix
+      )
+    : undefined
+
+  const responseLength = options.responseLengthEnabled
+    ? responseLengthGenerator(
+        options.customLabels,
+        options.responseLengthBuckets,
+        options.prefix
+      )
+    : undefined
+
   const up = new Prometheus.Gauge({
     name: 'up',
     help: '1 = up, 0 = not up',
@@ -137,13 +153,24 @@ function metricsMiddleware (userOption = {}) {
     const labels = { route, method, status }
 
     requestCount.inc(labels)
+
     // observe normalizing to seconds
     requestDuration.observe(labels, time / 1000)
+
+    if (options.requestLengthEnabled) {
+      requestLength.observe(labels, Number(req.headers['content-length']))
+    }
+    if (options.responseLengthEnabled) {
+      responseLength.observe(labels, Number(res.headers['content-length']))
+    }
   })
 }
 
 module.exports = {
   metricsMiddleware,
   normalizeStatusCode,
-  requestDurationGenerator
+  requestDurationGenerator,
+  requestCountGenerator,
+  requestLengthGenerator,
+  responseLengthGenerator
 }
