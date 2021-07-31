@@ -1,6 +1,6 @@
 {
   "name": "@veriksystems/node-commons",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Verik Nodejs common libs",
   "main": "index.js",
   "scripts": {
