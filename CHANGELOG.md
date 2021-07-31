@@ -1,4 +1,9 @@
 
+## v0.4.0, 31/07/2021
+
+- remove request length, response length
+- default metric, garbage collection metric enabled
+
 ## v0.3.0, 31/07/2021
 
 - expose request count, request length, response length
