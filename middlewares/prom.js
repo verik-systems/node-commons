@@ -7,7 +7,12 @@ const defaultOptions = {
   prefix: '',
   customLabels: [],
   normalizeStatus: true,
-  requestDurationBuckets: [0.003, 0.03, 0.1, 0.3, 1.5, 10]
+  requestDurationBuckets: [0.003, 0.03, 0.1, 0.3, 1.5, 10],
+
+  requestLengthEnabled: false,
+  requestLengthBuckets: [0, 10, 100, 1000, 10000, 100000],
+  responseLengthEnabled: false,
+  responseLengthBuckets: [0, 10, 100, 1000, 10000, 100000]
 }
 
 /**
@@ -19,6 +24,46 @@ function requestDurationGenerator (labelNames, buckets, prefix = '') {
   return new Prometheus.Histogram({
     name: `${prefix}http_request_duration_seconds`,
     help: 'Duration of HTTP requests in seconds',
+    labelNames,
+    buckets
+  })
+}
+
+/**
+ * @param prefix - metrics name prefix
+ * request counter
+ */
+function requestCountGenerator (labelNames, prefix = '') {
+  return new Prometheus.Counter({
+    name: `${prefix}http_requests_total`,
+    help: 'Counter for total requests received',
+    labelNames
+  })
+}
+
+/**
+ * @param {!Array} buckets - array of numbers, representing the buckets for
+ * @param prefix - metrics name prefix
+ * request length
+ */
+function requestLengthGenerator (labelNames, buckets, prefix = '') {
+  return new Prometheus.Histogram({
+    name: `${prefix}http_request_length_bytes`,
+    help: 'Content-Length of HTTP request',
+    labelNames,
+    buckets
+  })
+}
+
+/**
+ * @param {!Array} buckets - array of numbers, representing the buckets for
+ * @param prefix - metrics name prefix
+ * response length
+ */
+function responseLengthGenerator (labelNames, buckets, prefix = '') {
+  return new Prometheus.Histogram({
+    name: `${prefix}http_response_length_bytes`,
+    help: 'Content-Length of HTTP response',
     labelNames,
     buckets
   })
@@ -62,6 +107,11 @@ function metricsMiddleware (userOption = {}) {
     options.prefix
   )
 
+  const requestCount = requestCountGenerator(
+    options.customLabels,
+    options.prefix
+  )
+
   const up = new Prometheus.Gauge({
     name: 'up',
     help: '1 = up, 0 = not up',
@@ -86,6 +136,7 @@ function metricsMiddleware (userOption = {}) {
 
     const labels = { route, method, status }
 
+    requestCount.inc(labels)
     // observe normalizing to seconds
     requestDuration.observe(labels, time / 1000)
   })
