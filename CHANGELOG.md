@@ -1,4 +1,8 @@
 
+## v0.3.0, 31/07/2021
+
+- expose request count, request length, response length
+
 ## v0.2.2, 25/07/2021
 
 - inject prometheus signature with afterRemoteError
