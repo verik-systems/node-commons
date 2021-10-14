@@ -18,6 +18,7 @@ describe('request-id', function () {
 
     expect(count).to.eqls(1)
     expect(req.id).to.eqls('123-456')
+    expect(req.traceId).to.eq(req.id)
   })
 
   it('should generate request id which is a uuid', async () => {
@@ -32,5 +33,6 @@ describe('request-id', function () {
 
     expect(count).to.eqls(1)
     expect(req.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+    expect(req.traceId).to.eq(req.id)
   })
 })
