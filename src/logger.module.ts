@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { DynamicModule, Module } from "@nestjs/common";
-import { Request } from "express";
+import { IncomingMessage } from "http";
 import {
   LoggerModule as BaseLoggerModule,
   LoggerModuleAsyncParams,
@@ -20,10 +20,9 @@ export class VerikLoggerModule {
         transport: {
           target: "pino-pretty",
         },
-        useLevelLabels: true,
         autoLogging: false,
         timestamp: () => `, "time":"${new Date().toISOString()}"`,
-        genReqId: (request: Request) =>
+        genReqId: (request: IncomingMessage) =>
           request?.headers[VerikCommonConstants.HTTP_HEADER_X_REQUEST_ID] ||
           VerikUuidUtils.generateToken(),
       },
