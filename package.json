@@ -2,6 +2,10 @@
   "name": "@veriksystems/node-commons",
   "version": "0.5.0",
   "description": "Verik Nodejs common libs for nestjs",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/veriksystems/node-commons.git"
+  },
   "license": "Apache-2.0",
   "author": "Verik",
   "main": "./dist/index.js",
