@@ -1,4 +1,4 @@
-# [0.4.1] init Verik Nodejs common libs for nestjs
+# [0.5.0] init Verik Nodejs common libs for nestjs
 
 
 ### Features
