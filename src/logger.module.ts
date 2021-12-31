@@ -21,6 +21,7 @@ export class VerikLoggerModule {
           target: "pino-pretty",
         },
         autoLogging: false,
+        quietReqLogger: true,
         timestamp: () => `, "time":"${new Date().toISOString()}"`,
         genReqId: (request: IncomingMessage) =>
           request?.headers[VerikCommonConstants.HTTP_HEADER_X_REQUEST_ID] ||
