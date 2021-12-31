@@ -1,19 +1,13 @@
 image: node:latest
 
 stages:
-  - test
   - release
-
-test:
-  stage: test
-  script:
-    - npm install
-    - npm run lint
-    - npm run test
 
 release:
   stage: release
   script:
+    - npm install
+    - npm run build
     - echo "//${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/packages/npm/:_authToken=${CI_JOB_TOKEN}" > .npmrc
     - echo "//${CI_SERVER_HOST}/api/v4/packages/npm/:_authToken=${CI_JOB_TOKEN}" >> .npmrc
     - npm config set @veriksystems:registry https://gitlab.com/api/v4/projects/28236778/packages/npm/
