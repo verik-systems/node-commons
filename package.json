@@ -1,6 +1,6 @@
 {
   "name": "@veriksystems/node-commons",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Verik Nodejs common libs for nestjs",
   "repository": {
     "type": "git",
