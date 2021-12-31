@@ -141,6 +141,11 @@
   },
   "peerDependencies": {
     "@nestjs/common": "^7.0.0 || ^8.0.0",
+    "@willsoto/nestjs-prometheus": "~4.4.0",
+    "nestjs-pino": "^2.4.0",
+    "pino": "^7.6.2",
+    "pino-http": "^6.4.0",
+    "pino-pretty": "^7.3.0",
     "prom-client": "^13.0.0 || ^14.0.0"
   },
   "publishConfig": {
