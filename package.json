@@ -143,6 +143,9 @@
     "@nestjs/common": "^7.0.0 || ^8.0.0",
     "prom-client": "^13.0.0 || ^14.0.0"
   },
+  "publishConfig": {
+    "@veriksystems:registry": "https://gitlab.com/api/v4/projects/28236778/packages/npm/"
+  },
   "volta": {
     "node": "16.13.0",
     "npm": "8.1.2"
