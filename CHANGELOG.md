@@ -1,3 +1,10 @@
+## 1.0.0 (2022-02-14)
+
+
+### Features:
+
+* release script ([ef01fc5](https://github.com/verik-systems/node-commons/commit/ef01fc51bcbbd98bbcfff59a1c63a7bdc6b94a9a))
+
 ## v0.4.0, 31/07/2021
 
 - remove request length, response length
