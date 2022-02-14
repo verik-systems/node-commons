@@ -1,6 +1,6 @@
 {
   "name": "@veriksystems/node-commons",
-  "version": "2.0.0-beta",
+  "version": "2.0.0",
   "description": "Verik Nodejs common libs for nestjs",
   "license": "MIT",
   "author": "Verik",
