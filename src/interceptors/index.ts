@@ -1,1 +1,1 @@
-export * from "./prometheus.interceptor";
+export * from "./prometheus.interceptor"

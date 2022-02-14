@@ -1,21 +1,40 @@
+# Get started
+
+This is a veriksystems nestjs commons library
+
+## Installation
+
+`$ npm install @veriksystems/node-commons`
+
+Or add this package to your package.json file:
+
+```
+"dependencies": {
+  "@veriksystems/node-commons": "2.x.x"
+}
+```
+
 # NestJS Prometheus
 
 ![](https://github.com/willsoto/nestjs-prometheus/workflows/tests/badge.svg)
 
 <!-- toc -->
 
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Changing the metrics http endpoint](#changing-the-metrics-http-endpoint)
-  - [Disabling default metrics collection](#disabling-default-metrics-collection)
-  - [Configuring the default metrics](#configuring-the-default-metrics)
-- [Injecting individual metrics](#injecting-individual-metrics)
-- [Available metrics](#available-metrics)
-  - [Counter](#counter)
-  - [Gauge](#gauge)
-  - [Histogram](#histogram)
-  - [Summary](#summary)
-- [Providing a custom controller](#providing-a-custom-controller)
+- [Get started](#get-started)
+  - [Installation](#installation)
+- [NestJS Prometheus](#nestjs-prometheus)
+  - [Installation](#installation-1)
+  - [Usage](#usage)
+    - [Changing the metrics http endpoint](#changing-the-metrics-http-endpoint)
+    - [Disabling default metrics collection](#disabling-default-metrics-collection)
+    - [Configuring the default metrics](#configuring-the-default-metrics)
+  - [Injecting individual metrics](#injecting-individual-metrics)
+  - [Available metrics](#available-metrics)
+      - [Counter](#counter)
+      - [Gauge](#gauge)
+      - [Histogram](#histogram)
+      - [Summary](#summary)
+  - [Providing a custom controller](#providing-a-custom-controller)
 
 <!-- tocstop -->
 

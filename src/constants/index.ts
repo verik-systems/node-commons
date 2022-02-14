@@ -1,1 +1,1 @@
-export * from "./verik-common.constants";
+export * from "./verik-common.constants"
