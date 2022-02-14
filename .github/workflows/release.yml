@@ -1,0 +1,59 @@
+name: "Release veriksystems loopback 3 commons library"
+
+on:
+  push:
+    branches: [ lb3 ]
+
+  pull_request:
+    branches: [ lb3 ]
+
+jobs:
+  run-test:
+    name: 🧪 run test
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📚 checkout
+        uses: actions/checkout@v2
+      
+      - name: 🟢 node 16
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          registry-url: https://registry.npmjs.org
+
+      - name: ⚙️ install dependencies
+        run: npm ci 
+
+      - name: 🛠️ run lint
+        run: npm run lint
+
+      - name: 🧪 run test
+        run: npm test 
+
+  publish-npm-registry:
+    name: 🚀 publish npm registry
+    needs: [ run-test ]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/lb3' || github.ref == 'refs/heads/nestjs')
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📚 checkout
+        uses: actions/checkout@v2
+      
+      - name: 🟢 node 16
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          registry-url: https://registry.npmjs.org
+
+      - name: ⚙️ install dependencies
+        run: npm ci 
+
+      - name:  🚀 Release
+        env: 
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com" 
+          git config --global user.name "$GITHUB_ACTOR"
+          npm run release
