@@ -1,3 +1,10 @@
+### 2.0.2 (2022-02-14)
+
+
+### Chore:
+
+* update author in package.json ([4086d62](https://github.com/verik-systems/node-commons/commit/4086d62ac6e17aee78f7c49587f327b507e62526))
+
 ## 2.0.0 (2022-02-14)
 
 
