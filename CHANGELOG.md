@@ -1,3 +1,10 @@
+### 1.0.1 (2022-02-14)
+
+
+### Chore:
+
+* add info repository in package.json ([6c12133](https://github.com/verik-systems/node-commons/commit/6c12133e98c139e5fa40fb5ce8a03012536c578a))
+
 ## 1.0.0 (2022-02-14)
 
 
