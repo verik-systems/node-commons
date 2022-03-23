@@ -1,3 +1,10 @@
+### 2.0.3 (2022-03-23)
+
+
+### Chore:
+
+* Update json format as default logger module ([e0b2b60](https://github.com/verik-systems/node-commons/commit/e0b2b6072bb062fca951d4527f26f3c82c9c755c))
+
 ### 2.0.2 (2022-02-14)
 
 
