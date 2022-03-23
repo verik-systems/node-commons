@@ -13,9 +13,9 @@ export class VerikLoggerModule {
     return BaseLoggerModule.forRoot({
       pinoHttp: {
         level: "info",
-        transport: {
-          target: "pino-pretty",
-        },
+        // transport: {
+        //   target: "pino-pretty",
+        // },
         autoLogging: false,
         quietReqLogger: true,
         timestamp: () => `, "time":"${new Date().toISOString()}"`,
