@@ -1,45 +1,49 @@
 {
-  "name": "@veriksystems/node-commons",
-  "version": "1.0.1",
-  "description": "Verik lb3 common libs ",
-  "main": "index.js",
-  "scripts": {
-    "lint": "standard --env mocha",
-    "lint-fix": "standard --env mocha --fix",
-    "test": "mocha tests/*/*.js",
-    "release": "release-it --ci"
-  },
-  "author": "Nguyen Quoc Dinh",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:verik-systems/node-commons.git"
-  },
-  "bugs": {
-    "url": "https://github.com/verik-systems/node-commons/issues"
-  },
-  "homepage": "https://github.com/verik-systems/node-commons#readme",
-  "dependencies": {
-    "pino": "^6.12.0",
-    "prom-client": "^13.1.0",
-    "prometheus-gc-stats": "^0.6.3",
-    "response-time": "^2.3.2",
-    "uuid": "^8.3.2"
-  },
-  "devDependencies": {
-    "@release-it/conventional-changelog": "^4.1.0",
-    "chai": "^4.3.4",
-    "express": "^4.17.2",
-    "mocha": "^9.2.0",
-    "release-it": "^14.12.4",
-    "standard": "^16.0.4",
-    "supertest": "^6.1.4"
-  },
-  "directories": {
-    "example": "examples",
-    "test": "tests"
-  },
-  "publishConfig": {
-    "access": "public"
-  }
+	"name": "@veriksystems/node-commons",
+	"version": "1.0.1",
+	"description": "Verik lb3 common libs ",
+	"homepage": "https://github.com/verik-systems/node-commons#readme",
+	"bugs": {
+		"url": "https://github.com/verik-systems/node-commons/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:verik-systems/node-commons.git"
+	},
+	"license": "MIT",
+	"author": "Nguyen Quoc Dinh",
+	"main": "index.js",
+	"directories": {
+		"example": "examples",
+		"test": "tests"
+	},
+	"scripts": {
+		"lint": "standard --env mocha",
+		"lint-fix": "standard --env mocha --fix",
+		"release": "release-it --ci",
+		"test": "mocha tests/*/*.js"
+	},
+	"dependencies": {
+		"pino": "^6.12.0",
+		"prom-client": "^13.1.0",
+		"prometheus-gc-stats": "^0.6.3",
+		"response-time": "^2.3.2",
+		"uuid": "^8.3.2"
+	},
+	"devDependencies": {
+		"@release-it/conventional-changelog": "^4.1.0",
+		"chai": "^4.3.4",
+		"express": "^4.17.2",
+		"mocha": "^9.2.0",
+		"release-it": "^14.12.4",
+		"standard": "^16.0.4",
+		"supertest": "^6.1.4"
+	},
+	"engines": {
+		"node": ">=16.0.0",
+		"npm": ">=7.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
 }
