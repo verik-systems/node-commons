@@ -1,3 +1,10 @@
+### 1.1.0 (2022-04-20)
+
+
+### Chore:
+
+* add async localstorage ([250aa7e](https://github.com/verik-systems/node-commons/commit/250aa7e81432ff54cd5434c918b8092a10cfc053))
+
 ### 1.0.1 (2022-02-14)
 
 
