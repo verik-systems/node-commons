@@ -1,6 +1,6 @@
 {
 	"name": "@veriksystems/node-commons",
-	"version": "3.0.0",
+	"version": "3.0.1",
 	"description": "Verik lb3 common libs ",
 	"homepage": "https://github.com/verik-systems/node-commons#readme",
 	"bugs": {
