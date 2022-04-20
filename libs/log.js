@@ -3,6 +3,7 @@
 const { asChindings } = require('./utils')
 const pino = require('pino')
 const context = require('./async-context')
+const { v4: uuidv4 } = require('uuid')
 
 const wrapMethods = ['info', 'error', 'warn', 'debug']
 
@@ -18,7 +19,7 @@ const logger = pino({
   }
 })
 
-function Logger(pinoLogger) {
+function Logger (pinoLogger) {
   this.pinoLogger = pinoLogger
 }
 
@@ -52,7 +53,7 @@ module.exports.logger = function (moduleName) {
     bindings = { module: moduleName }
   }
   return new Proxy(logger, {
-    get(target, property, receiver) {
+    get (target, property, receiver) {
       target = context.getStore()?.get('logger') || target
       if (property === 'pinoLogger') {
         target.pinoLogger[pino.symbols.chindingsSym] = asChindings(
@@ -69,7 +70,7 @@ module.exports.logger = function (moduleName) {
 // to always log the request ID
 module.exports.contextMiddleware = (req, res, next) => {
   const child = new Logger(
-    logger.child({ requestId: req.traceId || uuid.v4() })
+    logger.child({ requestId: req.traceId || uuidv4() })
   )
 
   const store = new Map()

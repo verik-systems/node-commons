@@ -8,8 +8,7 @@ const {
   formattersSym
 } = require('pino/lib/symbols')
 
-
-function asChindings(instance, bindings) {
+function asChindings (instance, bindings) {
   let value
   let data = instance[chindingsSym]
   const stringify = instance[stringifySym]
@@ -22,7 +21,7 @@ function asChindings(instance, bindings) {
   const jsonData = JSON.parse(`{${data.slice(1)}}`)
 
   for (const key in bindings) {
-    if (jsonData.hasOwnProperty(key)) delete jsonData[key]
+    if (jsonData[key]) delete jsonData[key]
   }
 
   data = ',' + JSON.stringify(jsonData).replace(/[{}]/g, '')
@@ -34,7 +33,7 @@ function asChindings(instance, bindings) {
       key !== 'serializers' &&
       key !== 'formatters' &&
       key !== 'customLevels' &&
-      bindings.hasOwnProperty(key) &&
+      bindings[key] &&
       value !== undefined
     if (valid === true) {
       value = serializers[key] ? serializers[key](value) : value
