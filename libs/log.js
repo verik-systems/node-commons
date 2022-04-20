@@ -1,6 +1,9 @@
 'use strict'
 
+const { asChindings } = require('./utils')
 const pino = require('pino')
+const context = require('./async-context')
+const { v4: uuidv4 } = require('uuid')
 
 const wrapMethods = ['info', 'error', 'warn', 'debug']
 
@@ -20,17 +23,18 @@ function Logger (pinoLogger) {
   this.pinoLogger = pinoLogger
 }
 
-wrapMethods.forEach(item => {
+wrapMethods.forEach((item) => {
   Logger.prototype[item] = function (msg, data, ...more) {
-    const stringifyAble = data instanceof Error
-      ? {
-        // Pull all enumerable properties, supporting properties on custom Errors
-          ...data,
-          // Explicitly pull Error's non-enumerable properties
-          name: data.name,
-          message: data.message
-        }
-      : data
+    const stringifyAble =
+      data instanceof Error
+        ? {
+            // Pull all enumerable properties, supporting properties on custom Errors
+            ...data,
+            // Explicitly pull Error's non-enumerable properties
+            name: data.name,
+            message: data.message
+          }
+        : data
 
     this.pinoLogger[item]({
       // message
@@ -43,24 +47,34 @@ wrapMethods.forEach(item => {
   }
 })
 
-const wrapRequestIdMethods = ['infoId', 'errorId', 'warnId', 'debugId']
-
-wrapRequestIdMethods.forEach(item => {
-  Logger.prototype[item] = function (requestId, msg, data, ...more) {
-    const originalFn = item.replace('Id', '')
-    this.pinoLogger[originalFn]({
-      requestId: requestId,
-      msg,
-      d: data,
-      dEx: more.length > 0 ? more : undefined
-    })
-  }
-})
-
-module.exports = function (moduleName) {
+module.exports.logger = function (moduleName) {
   let bindings = {}
   if (moduleName) {
     bindings = { module: moduleName }
   }
-  return new Logger(logger.child(bindings))
+  return new Proxy(logger, {
+    get (target, property, receiver) {
+      target = context.getStore()?.get('logger') || target
+      if (property === 'pinoLogger') {
+        target.pinoLogger[pino.symbols.chindingsSym] = asChindings(
+          target.pinoLogger,
+          bindings
+        )
+      }
+      return Reflect.get(target, property, receiver)
+    }
+  })
+}
+
+// Generate a unique ID for each incoming request and store a child logger in context
+// to always log the request ID
+module.exports.contextMiddleware = (req, res, next) => {
+  const child = new Logger(
+    logger.child({ requestId: req.traceId || uuidv4() })
+  )
+
+  const store = new Map()
+  store.set('logger', child)
+
+  return context.run(store, next)
 }
