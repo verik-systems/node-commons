@@ -8,6 +8,7 @@ const {
   formattersSym
 } = require('pino/lib/symbols')
 
+
 function asChindings (instance, bindings) {
   let value
   let data = instance[chindingsSym]
