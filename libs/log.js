@@ -47,34 +47,59 @@ wrapMethods.forEach((item) => {
   }
 })
 
-module.exports.logger = function (moduleName) {
-  let bindings = {}
-  if (moduleName) {
-    bindings = { module: moduleName }
-  }
-  return new Proxy(logger, {
-    get (target, property, receiver) {
-      target = context.getStore()?.get('logger') || target
-      if (property === 'pinoLogger') {
-        target.pinoLogger[pino.symbols.chindingsSym] = asChindings(
-          target.pinoLogger,
-          bindings
-        )
-      }
-      return Reflect.get(target, property, receiver)
-    }
-  })
-}
+const wrapRequestIdMethods = ['infoId', 'errorId', 'warnId', 'debugId']
 
-// Generate a unique ID for each incoming request and store a child logger in context
-// to always log the request ID
-module.exports.contextMiddleware = (req, res, next) => {
+wrapRequestIdMethods.forEach(item => {
+  Logger.prototype[item] = function (requestId, msg, data, ...more) {
+    const originalFn = item.replace('Id', '')
+    this.pinoLogger[originalFn]({
+      requestId: requestId,
+      msg,
+      d: data,
+      dEx: more.length > 0 ? more : undefined
+    })
+  }
+})
+
+async function createAsyncContext (bindings, callback) {
   const child = new Logger(
-    logger.child({ requestId: req.traceId || uuidv4() })
+    logger.child(bindings)
   )
 
   const store = new Map()
   store.set('logger', child)
 
-  return context.run(store, next)
+  return context.run(store, callback)
+}
+
+// Generate a unique ID for each incoming request and store a child logger in context
+// to always log the request ID
+function contextMiddleware (req, res, next) {
+  const bindings = { requestId: req.traceId || uuidv4() }
+
+  return createAsyncContext(bindings, next)
+}
+
+module.exports = {
+  createAsyncContext,
+  contextMiddleware,
+  logger: function (moduleName) {
+    let bindings = {}
+    if (moduleName) {
+      bindings = { module: moduleName }
+    }
+    return new Proxy(new Logger(logger.child(bindings)), {
+      get (target, property, receiver) {
+        target = context.getStore()?.get('logger') || target
+
+        if (property === 'pinoLogger') {
+          target.pinoLogger[pino.symbols.chindingsSym] = asChindings(
+            target.pinoLogger,
+            bindings
+          )
+        }
+        return Reflect.get(target, property, receiver)
+      }
+    })
+  }
 }
