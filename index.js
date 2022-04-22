@@ -9,6 +9,7 @@ module.exports = {
   libs: {
     log: require('./libs/log').logger,
     promEnable: require('./libs/prom-enable'),
-    promHandler: require('./libs/prom-handler')
+    promHandler: require('./libs/prom-handler'),
+    createAsyncContext: require('./libs/log').createAsyncContext
   }
 }
