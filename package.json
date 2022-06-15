@@ -4,6 +4,8 @@
   "description": "Verik lb3 common libs ",
   "main": "index.js",
   "scripts": {
+    "postinstall": "patch-package",
+    "preinstall": "([ ! -f package-lock.json ] && npm install --package-lock-only --ignore-scripts --no-audit); npx npm-force-resolutions",
     "lint": "standard --env mocha",
     "lint-fix": "standard --env mocha --fix",
     "test": "mocha tests/*/*.js",
@@ -19,7 +21,14 @@
     "url": "https://github.com/verik-systems/node-commons/issues"
   },
   "homepage": "https://github.com/verik-systems/node-commons#readme",
+  "resolutions": {
+    "minimist": "^1.2.6",
+    "ini": "^2.0.0",
+    "tar": "^4.4.16"
+  },
   "dependencies": {
+    "patch-package": "^6.4.7",
+    "minimist": "^1.2.6",
     "pino": "^6.12.0",
     "prom-client": "^13.1.0",
     "prometheus-gc-stats": "^0.6.3",

@@ -3,6 +3,20 @@
 const pino = require('pino')
 
 const wrapMethods = ['info', 'error', 'warn', 'debug']
+const wrapRequestIdMethods = ['infoId', 'errorId', 'warnId', 'debugId']
+
+const stringifyAble = (input) => {
+  if (input instanceof Error) {
+    return {
+      // Pull all enumerable properties, supporting properties on custom Errors
+      ...input,
+      // Explicitly pull Error's non-enumerable properties
+      name: input.name,
+      message: input.message
+    }
+  }
+  return input
+}
 
 const logLevel = () => {
   const index = wrapMethods.indexOf(process.env.LOG_LEVEL)
@@ -22,36 +36,28 @@ function Logger (pinoLogger) {
 
 wrapMethods.forEach(item => {
   Logger.prototype[item] = function (msg, data, ...more) {
-    const stringifyAble = data instanceof Error
-      ? {
-        // Pull all enumerable properties, supporting properties on custom Errors
-          ...data,
-          // Explicitly pull Error's non-enumerable properties
-          name: data.name,
-          message: data.message
-        }
-      : data
-
     this.pinoLogger[item]({
       // message
-      msg,
+      msg: stringifyAble(msg),
       // data
-      d: stringifyAble,
+      d: stringifyAble(data),
       // more data to print
       dEx: more.length > 0 ? more : undefined
     })
   }
 })
 
-const wrapRequestIdMethods = ['infoId', 'errorId', 'warnId', 'debugId']
-
 wrapRequestIdMethods.forEach(item => {
   Logger.prototype[item] = function (requestId, msg, data, ...more) {
     const originalFn = item.replace('Id', '')
     this.pinoLogger[originalFn]({
+      // requestId
       requestId: requestId,
-      msg,
-      d: data,
+      // message
+      msg: stringifyAble(msg),
+      // data
+      d: stringifyAble(data),
+      // more data to print
       dEx: more.length > 0 ? more : undefined
     })
   }
