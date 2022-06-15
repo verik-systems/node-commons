@@ -22,7 +22,7 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: ⚙️ install dependencies
-        run: npm ci 
+        run: npm install 
 
       - name: 🛠️ run lint
         run: npm run lint
@@ -46,7 +46,7 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: ⚙️ install dependencies
-        run: npm ci 
+        run: npm install 
 
       - name:  🚀 Release
         env: 
