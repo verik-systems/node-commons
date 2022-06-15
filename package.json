@@ -1,7 +1,7 @@
 {
   "name": "@veriksystems/node-commons",
   "version": "1.0.2",
-  "description": "Verik lb3 common libs ",
+  "description": "Verik lb3 common libs",
   "main": "index.js",
   "scripts": {
     "postinstall": "patch-package",
