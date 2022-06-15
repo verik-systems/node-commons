@@ -33,7 +33,7 @@ jobs:
   publish-npm-registry:
     name: 🚀 publish npm registry
     needs: [ run-test ]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/lb3' || github.ref == 'refs/heads/nestjs')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/lb3'
     runs-on: ubuntu-latest
     steps:
       - name: 📚 checkout
