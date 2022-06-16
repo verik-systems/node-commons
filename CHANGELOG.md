@@ -1,5 +1,12 @@
 
 
+### 1.0.7 (2022-06-16)
+
+
+### Chore:
+
+* revert version prom-client ([9d962ac](https://github.com/verik-systems/node-commons/commit/9d962acc649570d462791ee233ac893efb2fc260))
+
 ### 1.0.6 (2022-06-16)
 
 
