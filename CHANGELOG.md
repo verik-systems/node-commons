@@ -1,3 +1,12 @@
+
+
+### 1.0.6 (2022-06-16)
+
+
+### Chore:
+
+* add random requestId ([74b5f37](https://github.com/verik-systems/node-commons/commit/74b5f373a6edd6f09f2b823a3f3823c8c236fae5))
+
 ### 1.0.1 (2022-02-14)
 
 
