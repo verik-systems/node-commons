@@ -6,9 +6,15 @@ function requestId (options) {
   options.headerName = options.headerName || 'x-request-id'
   options.attributeName = options.attributeName || 'id'
   return (req, _res, next) => {
-    if (!req[options.attributeName]) {
-      req[options.attributeName] = req.headers[options.headerName] || uuidv4()
+    const randomId = uuidv4()
+    if (!req.headers[options.headerName]) {
+      req.headers[options.headerName] = randomId
     }
+
+    if (!req[options.attributeName]) {
+      req[options.attributeName] = req.headers[options.headerName]
+    }
+
     // add a trace-id for tracing purpose
     req.traceId = req[options.attributeName]
     next()
