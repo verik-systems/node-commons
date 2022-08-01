@@ -144,38 +144,38 @@ function sqsMetricsMiddleware(userOption = {}) {
 	options.customLabels = new Set([...originalLabels, ...options.customLabels])
 	options.customLabels = [...options.customLabels]
 
-	let requestDurations = []
-	let requestCounts = []
-	let requestSums = []
+	let requestDurations = {}
+	let requestCounts = {}
+	let requestSums = {}
 	if (options.durationMetrics) {
 		for (const kind of options.durationMetrics) {
-			requestDurations.push(requestDurationGenerator(
+			requestDurations[kind] = requestDurationGenerator(
 				options.customLabels,
 				options.requestDurationBuckets,
 				options.prefix,
 				options.schema,
 				kind
-			))
+			)
 		}
 	}
 	if (options.countMetrics) {
 		for (const kind of options.countMetrics) {
-			requestDurations.push(requestCountGenerator(
+			requestDurations[kind] = requestCountGenerator(
 				options.customLabels,
 				options.prefix,
 				options.schema,
 				kind
-			))
+			)
 		}
 	}
 	if (options.sumMetrics) {
 		for (const kind of options.sumMetrics) {
-			requestSums.push(requestSumGenerator({
+			requestSums[kind] = requestSumGenerator({
 				labelNames: [],
 				prefix: options.prefix,
 				schema: options.schema,
 				kind
-			}))
+			})
 		}
 	}
 	/**
