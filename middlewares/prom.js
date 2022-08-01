@@ -144,38 +144,38 @@ function sqsMetricsMiddleware(userOption = {}) {
 	options.customLabels = new Set([...originalLabels, ...options.customLabels])
 	options.customLabels = [...options.customLabels]
 
-	let requestDuration = []
-	let requestCount = []
-	let requestSum = []
+	let requestDurations = []
+	let requestCounts = []
+	let requestSums = []
 	if (options.durationMetrics) {
 		for (const kind of options.durationMetrics) {
-			requestDuration = requestDurationGenerator(
+			requestDurations.push(requestDurationGenerator(
 				options.customLabels,
 				options.requestDurationBuckets,
 				options.prefix,
 				options.schema,
 				kind
-			)
+			))
 		}
 	}
 	if (options.countMetrics) {
 		for (const kind of options.countMetrics) {
-			requestDuration = requestCountGenerator(
+			requestDurations.push(requestCountGenerator(
 				options.customLabels,
 				options.prefix,
 				options.schema,
 				kind
-			)
+			))
 		}
 	}
 	if (options.sumMetrics) {
 		for (const kind of options.sumMetrics) {
-			requestSum = requestSumGenerator({
+			requestSums.push(requestSumGenerator({
 				labelNames: [],
 				prefix: options.prefix,
 				schema: options.schema,
 				kind
-			})
+			}))
 		}
 	}
 	/**
@@ -188,16 +188,16 @@ function sqsMetricsMiddleware(userOption = {}) {
 		if (!events.length) return;
 
 		for (const event of events) {
-			if (requestDuration[event])
-				requestDuration[event].observe({ event }, value / 1000);
-			if (requestCount[event]) {
+			if (requestDurations[event])
+				requestDurations[event].observe({ event }, value / 1000);
+			if (requestCounts[event]) {
 				const labels = {};
 				if (consumerId) labels.consumerId = consumerId;
 				if (status) labels.status = status;
-				requestCount[event].inc(labels);
+				requestCounts[event].inc(labels);
 			}
-			if (requestSum[event]) {
-				requestSum[event].set(value)
+			if (requestSums[event]) {
+				requestSums[event].set(value)
 			}
 		}
 
