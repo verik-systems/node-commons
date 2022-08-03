@@ -13,7 +13,7 @@ const defaultOptions = {
   defaultMetricEnabled: false,
   gbMetricEnabled: false
 }
-
+let metric = {}
 /**
  * @param {!Array} buckets - array of numbers, representing the buckets for
  * @param prefix - metrics name prefix
@@ -161,7 +161,7 @@ function sqsMetricsMiddleware (userOption = {}) {
   }
   if (options.countMetrics) {
     for (const kind of options.countMetrics) {
-      requestDurations[kind] = requestCountGenerator(
+      requestCounts[kind] = requestCountGenerator(
         options.customLabels,
         options.prefix,
         options.schema,
@@ -179,10 +179,13 @@ function sqsMetricsMiddleware (userOption = {}) {
       })
     }
   }
+  metric.requestSQSDurations = requestDurations
+  metric.requestSQSCounts = requestCounts
+  metric.requestSQSSums = requestSums
   /**
- * Corresponds to the R(equest rate), E(error rate), and D(uration of requests),
- * of the RED metrics.
- */
+   * Corresponds to the R(equest rate), E(error rate), and D(uration of requests),
+   * of the RED metrics.
+   */
   return ({ events, consumerId, status }, value) => {
     if (!events) return
     if (typeof events === 'string') events = [events]
@@ -290,5 +293,6 @@ module.exports = {
   requestCountGenerator,
   sqsMetricsMiddleware,
   requestSumGenerator,
-  queryMetricsMiddleware
+  queryMetricsMiddleware,
+  metric
 }
