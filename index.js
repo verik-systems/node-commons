@@ -4,7 +4,8 @@ module.exports = {
   middlewares: {
     requestId: require('./middlewares/request-id'),
     prom: require('./middlewares/prom').metricsMiddleware,
-		sqsProm: require('./middlewares/prom').sqsMetricsMiddleware,
+    sqsProm: require('./middlewares/prom').sqsMetricsMiddleware,
+    dbQueryProm: require('./middlewares/prom').queryMetricsMiddleware
   },
   libs: {
     log: require('./libs/log'),
