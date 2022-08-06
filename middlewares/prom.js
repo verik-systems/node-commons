@@ -222,6 +222,14 @@ function queryDurationGenerator (labelNames, buckets, prefix = '') {
   })
 }
 
+function countConnectionRetryGenerator (labelNames, prefix = '') {
+  return new Prometheus.Counter({
+    name: `${prefix}db_conn_retries`,
+    help: 'Counter for total connection retries',
+    labelNames
+  })
+}
+
 function workerToDbConnectionGenerator (kind, prefix = '') {
   return new Prometheus.Gauge({
     name: `${prefix}${kind}_worker_to_db_conn`,
@@ -238,6 +246,11 @@ function queryMetricsMiddleware (userOption = {}) {
   const queryDuration = queryDurationGenerator(
     options.customLabels,
     options.requestDurationBuckets,
+    options.prefix
+  )
+
+  const queryCounter = countConnectionRetryGenerator(
+    options.customLabels,
     options.prefix
   )
   const gauges = {}
@@ -280,9 +293,14 @@ function queryMetricsMiddleware (userOption = {}) {
     if (gauges[kind]) gauges[kind].set(inc)
   }
 
+  function updateConnectionRetryCounter(inc) {
+    queryCounter.inc(inc)
+  }
+
   return {
     promDBModelTracing,
-    updateNoWorkerConnection
+    updateNoWorkerConnection,
+    updateConnectionRetryCounter
   }
 }
 
