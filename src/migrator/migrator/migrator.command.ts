@@ -32,7 +32,7 @@ export class SchemaDropCommand implements yargs.CommandModule {
     return args.option("dataSource", {
       alias: "d",
       describe: "Path to the file where your DataSource instance is defined.",
-      demandOption: true,
+      // demandOption: true,
     })
   }
 
@@ -82,7 +82,7 @@ export class QueryCommand implements yargs.CommandModule {
       .option("dataSource", {
         alias: "d",
         describe: "Path to the file where your DataSource instance is defined.",
-        demandOption: true,
+        // demandOption: true,
       })
   }
 
@@ -216,7 +216,7 @@ export class MigrationShowCommand implements yargs.CommandModule {
     return args.option("dataSource", {
       alias: "d",
       describe: "Path to the file where your DataSource instance is defined.",
-      demandOption: true,
+      // demandOption: true,
     })
   }
 
@@ -263,7 +263,7 @@ export class MigrationRevertCommand implements yargs.CommandModule {
       .option("dataSource", {
         alias: "d",
         describe: "Path to the file where your DataSource instance is defined.",
-        demandOption: true,
+        // demandOption: true,
       })
       .option("transaction", {
         alias: "t",
@@ -425,7 +425,7 @@ export class MigrationGenerateCommand implements yargs.CommandModule {
         alias: "d",
         type: "string",
         describe: "Path to the file where your DataSource instance is defined.",
-        demandOption: true,
+        // demandOption: true,
       })
       .option("p", {
         alias: "pretty",
