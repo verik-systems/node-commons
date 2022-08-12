@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
-import { Connection, MssqlParameter, ObjectLiteral, QueryRunner, Table, TypeORMError } from "typeorm"
+import { DataSource, MssqlParameter, ObjectLiteral, QueryRunner, Table, TypeORMError } from "typeorm"
 import { SqlServerDriver } from "typeorm/driver/sqlserver/SqlServerDriver"
 import { RdbmsSchemaBuilder } from "typeorm/schema-builder/RdbmsSchemaBuilder"
 import { SeedInterface } from "./seeder.types"
@@ -55,9 +55,9 @@ export class SeedExecutor {
   private readonly seedsTable: string
   private readonly seedsTableName: string
 
-  constructor(protected connection: Connection) {
+  constructor(protected dataSource: DataSource) {
     this.seedsTableName = "seed"
-    this.seedsTable = this.connection.driver.buildTableName(this.seedsTableName)
+    this.seedsTable = this.dataSource.driver.buildTableName(this.seedsTableName)
   }
 
   /**
@@ -101,7 +101,7 @@ export class SeedExecutor {
    */
   async showSeeds(seeds: SeedInterface[]): Promise<boolean> {
     let hasUnappliedSeeds = false
-    const queryRunner = this.connection.createQueryRunner()
+    const queryRunner = this.dataSource.createQueryRunner()
     // create seeds table if its not created yet
     await this.createSeedsTableIfNotExist(queryRunner)
     // get all seeds that are executed and saved in the database
@@ -114,10 +114,10 @@ export class SeedExecutor {
       const executedSeed = executedSeeds.find((executedSeed) => executedSeed.name === seed.name)
 
       if (executedSeed) {
-        this.connection.logger.logSchemaBuild(` [X] ${seed.name}`)
+        this.dataSource.logger.logSchemaBuild(` [X] ${seed.name}`)
       } else {
         hasUnappliedSeeds = true
-        this.connection.logger.logSchemaBuild(` [ ] ${seed.name}`)
+        this.dataSource.logger.logSchemaBuild(` [ ] ${seed.name}`)
       }
     }
 
@@ -132,12 +132,12 @@ export class SeedExecutor {
    * thus not saved in the database.
    */
   async executePendingSeeds(seeds: SeedInterface[], packageVersion: string): Promise<Seed[]> {
-    const queryRunner = this.connection.createQueryRunner()
+    const queryRunner = this.dataSource.createQueryRunner()
     // create seeds table if its not created yet
     await this.createSeedsTableIfNotExist(queryRunner)
 
     // create the typeorm_metadata table if necessary
-    const schemaBuilder = this.connection.driver.createSchemaBuilder()
+    const schemaBuilder = this.dataSource.driver.createSchemaBuilder()
 
     if (schemaBuilder instanceof RdbmsSchemaBuilder) {
       await schemaBuilder.createMetadataTableIfNecessary(queryRunner)
@@ -171,22 +171,22 @@ export class SeedExecutor {
 
     // if no seeds are pending then nothing to do here
     if (!pendingSeeds.length) {
-      this.connection.logger.logSchemaBuild(`No seeds are pending`)
+      this.dataSource.logger.logSchemaBuild(`No seeds are pending`)
       // if query runner was created by us then release it
       await queryRunner.release()
       return []
     }
 
     // log information about seed execution
-    this.connection.logger.logSchemaBuild(`${executedSeeds.length} seeds are already loaded in the database.`)
-    this.connection.logger.logSchemaBuild(`${allSeeds.length} seeds were found in the source code.`)
+    this.dataSource.logger.logSchemaBuild(`${executedSeeds.length} seeds are already loaded in the database.`)
+    this.dataSource.logger.logSchemaBuild(`${allSeeds.length} seeds were found in the source code.`)
     if (lastTimeExecutedSeed)
-      this.connection.logger.logSchemaBuild(
+      this.dataSource.logger.logSchemaBuild(
         `${lastTimeExecutedSeed.name} is the last executed seed. It was executed on ${new Date(
           lastTimeExecutedSeed.timestamp,
         ).toString()}.`,
       )
-    this.connection.logger.logSchemaBuild(`${pendingSeeds.length} seeds are new seeds that needs to be executed.`)
+    this.dataSource.logger.logSchemaBuild(`${pendingSeeds.length} seeds are new seeds that needs to be executed.`)
 
     // start transaction if its not started yet
     let transactionStartedByUs = false
@@ -219,7 +219,7 @@ export class SeedExecutor {
           .up(queryRunner)
           .catch((error) => {
             // informative log about seed failure
-            this.connection.logger.logMigration(`Seed"${seed.name}" failed, error: ${error?.message}`)
+            this.dataSource.logger.logMigration(`Seed"${seed.name}" failed, error: ${error?.message}`)
             throw error
           })
           .then(async () => {
@@ -233,7 +233,7 @@ export class SeedExecutor {
           .then(() => {
             // informative log about seed success
             successSeeds.push(seed)
-            this.connection.logger.logSchemaBuild(`Seed${seed.name} has been executed successfully.`)
+            this.dataSource.logger.logSchemaBuild(`Seed${seed.name} has been executed successfully.`)
           })
       }
 
@@ -273,7 +273,7 @@ export class SeedExecutor {
           columns: [
             {
               name: "id",
-              type: this.connection.driver.normalizeType({ type: this.connection.driver.mappedDataTypes.migrationId }),
+              type: this.dataSource.driver.normalizeType({ type: this.dataSource.driver.mappedDataTypes.migrationId }),
               isGenerated: true,
               generationStrategy: "increment",
               isPrimary: true,
@@ -281,16 +281,16 @@ export class SeedExecutor {
             },
             {
               name: "timestamp",
-              type: this.connection.driver.normalizeType({
-                type: this.connection.driver.mappedDataTypes.migrationTimestamp,
+              type: this.dataSource.driver.normalizeType({
+                type: this.dataSource.driver.mappedDataTypes.migrationTimestamp,
               }),
               isPrimary: false,
               isNullable: false,
             },
             {
               name: "name",
-              type: this.connection.driver.normalizeType({
-                type: this.connection.driver.mappedDataTypes.migrationName,
+              type: this.dataSource.driver.normalizeType({
+                type: this.dataSource.driver.mappedDataTypes.migrationName,
               }),
               isNullable: false,
             },
@@ -304,10 +304,10 @@ export class SeedExecutor {
    * Loads all seeds that were executed and saved into the database (sorts by id).
    */
   protected async loadExecutedSeeds(queryRunner: QueryRunner): Promise<Seed[]> {
-    const seedsRaw: ObjectLiteral[] = await this.connection.manager
+    const seedsRaw: ObjectLiteral[] = await this.dataSource.manager
       .createQueryBuilder(queryRunner)
       .select()
-      .orderBy(this.connection.driver.escape("id"), "DESC")
+      .orderBy(this.dataSource.driver.escape("id"), "DESC")
       .from(this.seedsTable, this.seedsTableName)
       .getRawMany()
     return seedsRaw.map((seedRaw) => {
@@ -366,16 +366,16 @@ export class SeedExecutor {
    */
   protected async insertExecutedSeed(queryRunner: QueryRunner, seed: Seed): Promise<void> {
     const values: ObjectLiteral = {}
-    if (this.connection.driver instanceof SqlServerDriver) {
+    if (this.dataSource.driver instanceof SqlServerDriver) {
       values["timestamp"] = new MssqlParameter(
         seed.timestamp,
-        this.connection.driver.normalizeType({
-          type: this.connection.driver.mappedDataTypes.migrationTimestamp,
+        this.dataSource.driver.normalizeType({
+          type: this.dataSource.driver.mappedDataTypes.migrationTimestamp,
         }) as any,
       )
       values["name"] = new MssqlParameter(
         seed.name,
-        this.connection.driver.normalizeType({ type: this.connection.driver.mappedDataTypes.migrationName }) as any,
+        this.dataSource.driver.normalizeType({ type: this.dataSource.driver.mappedDataTypes.migrationName }) as any,
       )
     } else {
       values["timestamp"] = seed.timestamp
@@ -387,7 +387,7 @@ export class SeedExecutor {
   }
 
   protected async withQueryRunner<T>(callback: (queryRunner: QueryRunner) => T | Promise<T>) {
-    const queryRunner = this.connection.createQueryRunner()
+    const queryRunner = this.dataSource.createQueryRunner()
 
     try {
       return callback(queryRunner)

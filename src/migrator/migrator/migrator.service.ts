@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 
 import { Injectable } from "@nestjs/common"
-import { ConnectionOptions } from "typeorm"
+import { DataSourceOptions } from "typeorm"
 import * as yargs from "yargs"
 import {
   MigrationCreateCommand,
@@ -16,14 +16,14 @@ import {
 
 @Injectable()
 export class MigratorService {
-  async start(connectionOptions: ConnectionOptions) {
-    const migrationQuery = new QueryCommand(connectionOptions)
-    const migrationShow = new MigrationShowCommand(connectionOptions)
-    const migrationRun = new MigrationRunCommand(connectionOptions)
-    const migrationRevert = new MigrationRevertCommand(connectionOptions)
-    const migrationDrop = new SchemaDropCommand(connectionOptions)
-    const migrationCreate = new MigrationCreateCommand(connectionOptions)
-    const migrationGenerate = new MigrationGenerateCommand(connectionOptions)
+  async start(dataSourceOptions: DataSourceOptions) {
+    const migrationQuery = new QueryCommand(dataSourceOptions)
+    const migrationShow = new MigrationShowCommand(dataSourceOptions)
+    const migrationRun = new MigrationRunCommand(dataSourceOptions)
+    const migrationRevert = new MigrationRevertCommand(dataSourceOptions)
+    const migrationDrop = new SchemaDropCommand(dataSourceOptions)
+    const migrationCreate = new MigrationCreateCommand(dataSourceOptions)
+    const migrationGenerate = new MigrationGenerateCommand(dataSourceOptions)
 
     const commands = [
       migrationQuery,

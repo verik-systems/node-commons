@@ -7,7 +7,8 @@
 import { Logger } from "@nestjs/common"
 import { format } from "@sqltools/formatter/lib/sqlFormatter"
 import { camelCase } from "lodash"
-import { Connection, ConnectionOptions, createConnection, QueryRunner } from "typeorm"
+import * as path from "path"
+import { DataSource, DataSourceOptions, QueryRunner } from "typeorm"
 import { PlatformTools } from "typeorm/platform/PlatformTools"
 import * as yargs from "yargs"
 import { CommandUtils } from "../CommandUtils"
@@ -18,40 +19,45 @@ import { CommandUtils } from "../CommandUtils"
 export class SchemaDropCommand implements yargs.CommandModule {
   command = "schema:drop"
   describe =
-    "Drops all tables in the database on your default connection. " +
+    "Drops all tables in the database on your default dataSource. " +
     "To drop table of a concrete connection's database use -c option."
 
-  connectionOptions: ConnectionOptions
+  dataSourceOptions: DataSourceOptions
 
-  constructor(connectionOptions: ConnectionOptions) {
-    this.connectionOptions = connectionOptions
+  constructor(dataSourceOptions: DataSourceOptions) {
+    this.dataSourceOptions = dataSourceOptions
   }
 
   builder = (args: yargs.Argv) => {
-    return args.option("c", {
-      alias: "connection",
-      default: "default",
-      describe: "Name of the connection on which to drop all tables.",
+    return args.option("dataSource", {
+      alias: "d",
+      describe: "Path to the file where your DataSource instance is defined.",
+      demandOption: true,
     })
   }
 
-  handler = async () => {
-    let connection: Connection | undefined = undefined
+  handler = async (_: yargs.Arguments) => {
+    let dataSource: DataSource | undefined = undefined
     try {
-      Object.assign(this.connectionOptions, {
+      dataSource = new DataSource(this.dataSourceOptions)
+      dataSource.setOptions({
         synchronize: false,
         migrationsRun: false,
         dropSchema: false,
+        logging: ["query", "schema"],
       })
-      connection = await createConnection(this.connectionOptions)
-      await connection.dropDatabase()
-      await connection.close()
+
+      await dataSource.initialize()
+      await dataSource.dropDatabase()
+      await dataSource.destroy()
 
       Logger.log("Database schema has been successfully dropped.")
     } catch (err) {
-      if (connection) await connection.close()
-      Logger.error("Error during schema drop:")
-      console.error(err)
+      PlatformTools.logCmdErr("Error during schema drop:", err)
+
+      if (dataSource && dataSource.isInitialized) await dataSource.destroy()
+
+      process.exit(1)
     }
   }
 }
@@ -61,12 +67,11 @@ export class SchemaDropCommand implements yargs.CommandModule {
  */
 export class QueryCommand implements yargs.CommandModule {
   command = "query [query]"
-  describe = `Executes given SQL query on a default connection.
-      Specify connection name to run query on a specific connection.`
-  connectionOptions: ConnectionOptions
+  describe = `Executes given SQL query on a default dataSource. Specify connection name to run query on a specific dataSource.`
+  dataSourceOptions: DataSourceOptions
 
-  constructor(connectionOptions: ConnectionOptions) {
-    this.connectionOptions = connectionOptions
+  constructor(dataSourceOptions: DataSourceOptions) {
+    this.dataSourceOptions = dataSourceOptions
   }
 
   builder = (args: yargs.Argv) => {
@@ -75,28 +80,31 @@ export class QueryCommand implements yargs.CommandModule {
         describe: "The SQL Query to run",
         type: "string",
       })
-      .option("c", {
-        alias: "connection",
-        default: "default",
-        describe: "Name of the connection on which to run a query.",
+      .option("dataSource", {
+        alias: "d",
+        describe: "Path to the file where your DataSource instance is defined.",
+        demandOption: true,
       })
   }
 
   handler = async (args: yargs.Arguments) => {
-    let connection: Connection | undefined = undefined
     let queryRunner: QueryRunner | undefined = undefined
+    let dataSource: DataSource | undefined = undefined
     try {
-      Object.assign(this.connectionOptions, {
+      dataSource = new DataSource(this.dataSourceOptions)
+      dataSource.setOptions({
         synchronize: false,
         migrationsRun: false,
         dropSchema: false,
+        logging: false,
       })
-      connection = await createConnection(this.connectionOptions)
+      await dataSource.initialize()
+
       // create a query runner and execute query using it
-      queryRunner = connection.createQueryRunner()
+      queryRunner = dataSource.createQueryRunner()
       const query = args.query as string
 
-      Logger.log("Running query: " + PlatformTools.highlightSql(query))
+      Logger.log(`Running query: ${PlatformTools.highlightSql(query)}`)
 
       const queryResult = await queryRunner.query(query)
 
@@ -108,12 +116,14 @@ export class QueryCommand implements yargs.CommandModule {
       }
 
       await queryRunner.release()
-      await connection.close()
+      await dataSource.destroy()
     } catch (err) {
+      PlatformTools.logCmdErr("Error during query execution:", err)
+
       if (queryRunner) await queryRunner.release()
-      if (connection) await connection.close()
-      Logger.error("Error during query execution:")
-      console.error(err)
+      if (dataSource && dataSource.isInitialized) await dataSource.destroy()
+
+      process.exit(1)
     }
   }
 }
@@ -124,19 +134,19 @@ export class QueryCommand implements yargs.CommandModule {
 export class MigrationRunCommand implements yargs.CommandModule {
   command = "migration:run"
   describe = "Runs all pending migrations."
-  aliases = "migrations:run"
-  connectionOptions: ConnectionOptions
+  aliases = "migration:run"
+  dataSourceOptions: DataSourceOptions
 
-  constructor(connectionOptions: ConnectionOptions) {
-    this.connectionOptions = connectionOptions
+  constructor(dataSourceOptions: DataSourceOptions) {
+    this.dataSourceOptions = dataSourceOptions
   }
 
   builder = (args: yargs.Argv) => {
     return args
-      .option("connection", {
-        alias: "c",
-        default: "default",
-        describe: "Name of the connection on which run a query.",
+      .option("dataSource", {
+        alias: "d",
+        describe: "Path to the file where your DataSource instance is defined.",
+        // demandOption: true,
       })
       .option("transaction", {
         alias: "t",
@@ -146,18 +156,20 @@ export class MigrationRunCommand implements yargs.CommandModule {
   }
 
   handler = async (args: yargs.Arguments) => {
-    let connection: Connection | undefined = undefined
+    let dataSource: DataSource | undefined = undefined
     try {
-      Object.assign(this.connectionOptions, {
+      dataSource = new DataSource(this.dataSourceOptions)
+      dataSource.setOptions({
         subscribers: [],
         synchronize: false,
         migrationsRun: false,
         dropSchema: false,
+        logging: ["query", "error", "schema"],
       })
-      connection = await createConnection(this.connectionOptions)
+      await dataSource.initialize()
 
       const options = {
-        transaction: this.connectionOptions.migrationsTransactionMode ?? ("all" as "all" | "none" | "each"),
+        transaction: dataSource.options.migrationsTransactionMode ?? ("all" as "all" | "none" | "each"),
       }
 
       switch (args.t) {
@@ -175,12 +187,17 @@ export class MigrationRunCommand implements yargs.CommandModule {
         // noop
       }
 
-      await connection.runMigrations(options)
-      await connection.close()
+      await dataSource.runMigrations(options)
+      await dataSource.destroy()
+
+      // exit process if no errors
+      process.exit(0)
     } catch (err) {
-      if (connection) await connection.close()
-      Logger.error("Error during migration run:")
-      console.error(err)
+      PlatformTools.logCmdErr("Error during migration run:", err)
+
+      if (dataSource && dataSource.isInitialized) await dataSource.destroy()
+
+      process.exit(1)
     }
   }
 }
@@ -191,40 +208,43 @@ export class MigrationRunCommand implements yargs.CommandModule {
 export class MigrationShowCommand implements yargs.CommandModule {
   command = "migration:show"
   describe = "Show all migrations and whether they have been run or not"
-  connectionOptions: ConnectionOptions
+  dataSourceOptions: DataSourceOptions
   aliases?: string | readonly string[]
-  deprecated?: string | boolean
 
-  constructor(connectionOptions: ConnectionOptions) {
-    this.connectionOptions = connectionOptions
+  constructor(dataSourceOptions: DataSourceOptions) {
+    this.dataSourceOptions = dataSourceOptions
   }
 
   builder = (args: yargs.Argv) => {
-    return args.option("connection", {
-      alias: "c",
-      default: "default",
-      describe: "Name of the connection on which run a query.",
+    return args.option("dataSource", {
+      alias: "d",
+      describe: "Path to the file where your DataSource instance is defined.",
+      demandOption: true,
     })
   }
 
-  handler = async () => {
-    let connection: Connection | undefined = undefined
-
+  handler = async (_: yargs.Arguments) => {
+    let dataSource: DataSource | undefined = undefined
     try {
-      Object.assign(this.connectionOptions, {
+      dataSource = new DataSource(this.dataSourceOptions)
+      dataSource.setOptions({
         subscribers: [],
         synchronize: false,
         migrationsRun: false,
         dropSchema: false,
+        logging: ["schema"],
       })
-      connection = await createConnection(this.connectionOptions)
-      const unappliedMigrations = await connection.showMigrations()
-      await connection.close()
-      Logger.log(`Unapplied migrations: ${unappliedMigrations}`)
+      await dataSource.initialize()
+      await dataSource.showMigrations()
+      await dataSource.destroy()
+
+      process.exit(0)
     } catch (err) {
-      if (connection) await connection.close()
-      Logger.error("Error during migration show:")
-      console.error(err)
+      PlatformTools.logCmdErr("Error during migration show:", err)
+
+      if (dataSource && dataSource.isInitialized) await dataSource.destroy()
+
+      process.exit(1)
     }
   }
 }
@@ -235,19 +255,19 @@ export class MigrationShowCommand implements yargs.CommandModule {
 export class MigrationRevertCommand implements yargs.CommandModule {
   command = "migration:revert"
   describe = "Reverts last executed migration."
-  aliases = "migrations:revert"
-  connectionOptions: ConnectionOptions
+  aliases = "migration:revert"
+  dataSourceOptions: DataSourceOptions
 
-  constructor(connectionOptions: ConnectionOptions) {
-    this.connectionOptions = connectionOptions
+  constructor(dataSourceOptions: DataSourceOptions) {
+    this.dataSourceOptions = dataSourceOptions
   }
 
   builder = (args: yargs.Argv) => {
     return args
-      .option("c", {
-        alias: "connection",
-        default: "default",
-        describe: "Name of the connection on which run a query.",
+      .option("dataSource", {
+        alias: "d",
+        describe: "Path to the file where your DataSource instance is defined.",
+        demandOption: true,
       })
       .option("transaction", {
         alias: "t",
@@ -257,22 +277,21 @@ export class MigrationRevertCommand implements yargs.CommandModule {
   }
 
   handler = async (args: yargs.Arguments) => {
-    if (args._[0] === "migrations:revert") {
-      console.log("'migrations:revert' is deprecated, please use 'migration:revert' instead")
-    }
+    let dataSource: DataSource | undefined = undefined
 
-    let connection: Connection | undefined = undefined
     try {
-      Object.assign(this.connectionOptions, {
+      dataSource = new DataSource(this.dataSourceOptions)
+      dataSource.setOptions({
         subscribers: [],
         synchronize: false,
         migrationsRun: false,
         dropSchema: false,
+        logging: ["query", "error", "schema"],
       })
-      connection = await createConnection(this.connectionOptions)
+      await dataSource.initialize()
 
       const options = {
-        transaction: this.connectionOptions.migrationsTransactionMode ?? ("all" as "all" | "none" | "each"),
+        transaction: dataSource.options.migrationsTransactionMode ?? ("all" as "all" | "none" | "each"),
       }
 
       switch (args.t) {
@@ -290,13 +309,14 @@ export class MigrationRevertCommand implements yargs.CommandModule {
         // noop
       }
 
-      await connection.undoLastMigration(options)
-      await connection.close()
+      await dataSource.undoLastMigration(options)
+      await dataSource.destroy()
     } catch (err) {
-      if (connection) await connection.close()
+      PlatformTools.logCmdErr("Error during migration revert:", err)
 
-      Logger.error("Error during migration revert:")
-      console.error(err)
+      if (dataSource && dataSource.isInitialized) await dataSource.destroy()
+
+      process.exit(1)
     }
   }
 }
@@ -305,63 +325,51 @@ export class MigrationRevertCommand implements yargs.CommandModule {
  * Creates a new migration file.
  */
 export class MigrationCreateCommand implements yargs.CommandModule {
-  command = "migration:create"
+  command = "migration:create <path>"
   describe = "Creates a new migration file."
-  aliases = "migrations:create"
-  connectionOptions: ConnectionOptions
+  aliases = "migration:create"
 
-  constructor(connectionOptions: ConnectionOptions) {
-    this.connectionOptions = connectionOptions
+  dataSourceOptions: DataSourceOptions
+
+  constructor(dataSourceOptions: DataSourceOptions) {
+    this.dataSourceOptions = dataSourceOptions
   }
 
   builder = (args: yargs.Argv) => {
     return args
-      .option("c", {
-        alias: "connection",
-        default: "default",
-        describe: "Name of the connection on which run a query.",
-      })
-      .option("n", {
-        alias: "name",
-        describe: "Name of the migration class.",
-        demand: true,
-      })
-      .option("d", {
-        alias: "dir",
-        describe: "Directory where migration should be created.",
-      })
       .option("o", {
         alias: "outputJs",
         type: "boolean",
         default: false,
         describe: "Generate a migration file on Javascript instead of Typescript",
       })
+      .option("t", {
+        alias: "timestamp",
+        type: "number",
+        default: false,
+        describe: "Custom timestamp for the migration name",
+      })
   }
 
   handler = async (args: yargs.Arguments) => {
     try {
-      const timestamp = new Date().getTime()
+      const timestamp = CommandUtils.getTimestamp(args.timestamp)
+
+      const inputPath = (args.path as string).startsWith("/")
+        ? (args.path as string)
+        : path.resolve(process.cwd(), args.path as string)
+      const filename = path.basename(inputPath)
+      const fullPath = path.dirname(inputPath) + "/" + timestamp + "-" + filename
+
       const fileContent = args.outputJs
-        ? MigrationCreateCommand.getJavascriptTemplate(args.name as any, timestamp)
-        : MigrationCreateCommand.getTemplate(args.name as any, timestamp)
-      const extension = args.outputJs ? ".js" : ".ts"
-      const filename = timestamp + "-" + args.name + extension
-      let directory = args.dir as string | undefined
+        ? MigrationCreateCommand.getJavascriptTemplate(filename, timestamp)
+        : MigrationCreateCommand.getTemplate(filename, timestamp)
 
-      // if directory is not set then try to open tsconfig and find default path there
-      if (!directory) {
-        directory = this.connectionOptions.cli ? this.connectionOptions.cli.migrationsDir || "" : ""
-      }
+      await CommandUtils.createFile(fullPath + (args.outputJs ? ".js" : ".ts"), fileContent)
 
-      if (directory && !directory.startsWith("/")) {
-        directory = process.cwd() + "/" + directory
-      }
-      const path = (directory ? directory + "/" : "") + filename
-      await CommandUtils.createFile(path, fileContent)
-      Logger.log(`Migration has been generated successfully.`)
+      Logger.log(`Migration ${fullPath + (args.outputJs ? ".js" : ".ts")} has been generated successfully.`)
     } catch (err) {
-      Logger.error("Error during migration creation:")
-      console.error(err)
+      PlatformTools.logCmdErr("Error during migration creation:", err)
     }
   }
 
@@ -406,31 +414,23 @@ module.exports = class ${camelCase(name)}${timestamp} {
  * Generates a new migration file with sql needs to be executed to update schema.
  */
 export class MigrationGenerateCommand implements yargs.CommandModule {
-  command = "migration:generate"
+  command = "migration:generate <path>"
   describe = "Generates a new migration file with sql needs to be executed to update schema."
   aliases = "migrations:generate"
-  connectionOptions: ConnectionOptions
 
-  constructor(connectionOptions: ConnectionOptions) {
-    this.connectionOptions = connectionOptions
+  dataSourceOptions: DataSourceOptions
+
+  constructor(dataSourceOptions: DataSourceOptions) {
+    this.dataSourceOptions = dataSourceOptions
   }
 
   builder = async (args: yargs.Argv) => {
     return args
-      .option("c", {
-        alias: "connection",
-        default: "default",
-        describe: "Name of the connection on which run a query.",
-      })
-      .option("n", {
-        alias: "name",
-        describe: "Name of the migration class.",
-        demand: true,
+      .option("dataSource", {
+        alias: "d",
         type: "string",
-      })
-      .option("d", {
-        alias: "dir",
-        describe: "Directory where migration should be created.",
+        describe: "Path to the file where your DataSource instance is defined.",
+        demandOption: true,
       })
       .option("p", {
         alias: "pretty",
@@ -457,36 +457,39 @@ export class MigrationGenerateCommand implements yargs.CommandModule {
         describe:
           "Verifies that the current database is up to date and that no migrations are needed. Otherwise exits with code 1.",
       })
+      .option("t", {
+        alias: "timestamp",
+        type: "number",
+        default: false,
+        describe: "Custom timestamp for the migration name",
+      })
   }
 
   handler = async (args: yargs.Arguments) => {
-    if (args._[0] === "migrations:generate") {
-      console.log("'migrations:generate' is deprecated, please use 'migration:generate' instead")
-    }
-
-    const timestamp = new Date().getTime()
+    const timestamp = CommandUtils.getTimestamp(args.timestamp)
     const extension = args.outputJs ? ".js" : ".ts"
-    const filename = timestamp + "-" + args.name + extension
-    let directory = args.dir as string | undefined
+    const fullPath = (args.path as string).startsWith("/")
+      ? (args.path as string)
+      : path.resolve(process.cwd(), args.path as string)
+    const filename = timestamp + "-" + path.basename(fullPath) + extension
 
-    // if directory is not set then try to open tsconfig and find default path there
-    if (!directory) {
-      directory = this.connectionOptions.cli ? this.connectionOptions.cli.migrationsDir || "" : ""
-    }
+    let dataSource: DataSource | undefined = undefined
 
     try {
-      Object.assign(this.connectionOptions, {
+      dataSource = new DataSource(this.dataSourceOptions)
+      dataSource.setOptions({
         synchronize: false,
         migrationsRun: false,
         dropSchema: false,
+        logging: false,
       })
+      await dataSource.initialize()
 
       const upSqls: string[] = [],
         downSqls: string[] = []
 
-      const connection = await createConnection(this.connectionOptions)
       try {
-        const sqlInMemory = await connection.driver.createSchemaBuilder().log()
+        const sqlInMemory = await dataSource.driver.createSchemaBuilder().log()
 
         if (args.pretty) {
           sqlInMemory.upQueries.forEach((upQuery) => {
@@ -516,48 +519,44 @@ export class MigrationGenerateCommand implements yargs.CommandModule {
           )
         })
       } finally {
-        await connection.close()
+        await dataSource.destroy()
       }
 
       if (!upSqls.length) {
         if (args.check) {
-          Logger.warn(`No changes in database schema were found`)
-          return
+          Logger.log(`No changes in database schema were found`)
+          process.exit(0)
         } else {
           Logger.warn(
             `No changes in database schema were found - cannot generate a migration. To create a new empty migration use "typeorm migration:create" command`,
           )
-          return
+          process.exit(1)
         }
-      } else if (!args.name) {
-        Logger.warn("Please specify a migration name using the `-n` argument")
-        return
+      } else if (!args.path) {
+        Logger.warn("Please specify a migration path")
+        process.exit(1)
       }
 
       const fileContent = args.outputJs
-        ? MigrationGenerateCommand.getJavascriptTemplate(args.name as any, timestamp, upSqls, downSqls.reverse())
-        : MigrationGenerateCommand.getTemplate(args.name as any, timestamp, upSqls, downSqls.reverse())
-      if (directory && !directory.startsWith("/")) {
-        directory = process.cwd() + "/" + directory
-      }
-      const path = (directory ? directory + "/" : "") + filename
+        ? MigrationGenerateCommand.getJavascriptTemplate(path.basename(fullPath), timestamp, upSqls, downSqls.reverse())
+        : MigrationGenerateCommand.getTemplate(path.basename(fullPath), timestamp, upSqls, downSqls.reverse())
 
       if (args.check) {
-        Logger.warn(`Unexpected changes in database schema were found in check mode:\n\n${fileContent}`)
-        return
+        Logger.warn(`Unexpected changes in database schema were found in check mode:\n\n`, fileContent)
+        process.exit(1)
       }
 
       if (args.dryrun) {
-        console.info(`Migration has content:\n\n${fileContent}`)
+        Logger.log(`Migration ${fullPath + extension} has content:\n\n`, fileContent)
       } else {
-        await CommandUtils.createFile(path, fileContent)
+        const migrationFileName = path.dirname(fullPath) + "/" + filename
+        await CommandUtils.createFile(migrationFileName, fileContent)
 
-        Logger.log(`Migration has been generated successfully.`)
+        Logger.log(`Migration ${migrationFileName} has been generated successfully.`)
       }
     } catch (err) {
-      Logger.error("Error during migration generation:")
-      console.error(err)
-      return
+      PlatformTools.logCmdErr("Error during migration generation:", err)
+      process.exit(1)
     }
   }
 
