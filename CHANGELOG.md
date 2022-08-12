@@ -1,3 +1,7 @@
+
+
+## 2.0.4 (2022-08-12)
+
 ### 2.0.3 (2022-03-23)
 
 
@@ -26,4 +30,3 @@
 
 * support logging module base on nestjs-pino ((https://github.com/iamolegga/nestjs-pino))
 * support prometheus module base on nestjs-prometheus ((https://github.com/willsoto/nestjs-prometheus))
-
