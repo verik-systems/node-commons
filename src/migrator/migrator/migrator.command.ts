@@ -44,7 +44,6 @@ export class SchemaDropCommand implements yargs.CommandModule {
         synchronize: false,
         migrationsRun: false,
         dropSchema: false,
-        logging: ["query", "schema"],
       })
 
       await dataSource.initialize()
@@ -96,7 +95,6 @@ export class QueryCommand implements yargs.CommandModule {
         synchronize: false,
         migrationsRun: false,
         dropSchema: false,
-        logging: false,
       })
       await dataSource.initialize()
 
@@ -164,7 +162,6 @@ export class MigrationRunCommand implements yargs.CommandModule {
         synchronize: false,
         migrationsRun: false,
         dropSchema: false,
-        logging: ["query", "error", "schema"],
       })
       await dataSource.initialize()
 
@@ -232,7 +229,6 @@ export class MigrationShowCommand implements yargs.CommandModule {
         synchronize: false,
         migrationsRun: false,
         dropSchema: false,
-        logging: ["schema"],
       })
       await dataSource.initialize()
       await dataSource.showMigrations()
@@ -286,7 +282,6 @@ export class MigrationRevertCommand implements yargs.CommandModule {
         synchronize: false,
         migrationsRun: false,
         dropSchema: false,
-        logging: ["query", "error", "schema"],
       })
       await dataSource.initialize()
 
@@ -481,7 +476,6 @@ export class MigrationGenerateCommand implements yargs.CommandModule {
         synchronize: false,
         migrationsRun: false,
         dropSchema: false,
-        logging: false,
       })
       await dataSource.initialize()
 
