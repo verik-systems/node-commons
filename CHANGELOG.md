@@ -1,5 +1,12 @@
 
 
+## 2.0.6 (2022-08-12)
+
+
+### Chore:
+
+* comment demandOption dataSource ([1889c15](https://github.com/verik-systems/node-commons/commit/1889c15c629781574318132b4a9875814c277d93))
+
 ## 2.0.5 (2022-08-12)
 
 ## 2.0.4 (2022-08-12)
