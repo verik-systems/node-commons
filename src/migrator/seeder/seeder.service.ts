@@ -8,7 +8,7 @@
 
 import { Injectable, Logger } from "@nestjs/common"
 import * as glob from "glob"
-import { ConnectionOptions, EntitySchema, getFromContainer } from "typeorm"
+import { DataSourceOptions, EntitySchema, getFromContainer } from "typeorm"
 import { PlatformTools } from "typeorm/platform/PlatformTools"
 import * as yargs from "yargs"
 import { SeedCreateCommand, SeedRunCommand, SeedShowCommand } from "./seeder.command"
@@ -16,10 +16,10 @@ import { SeederExtraOptions, SeedInterface } from "./seeder.types"
 
 @Injectable()
 export class SeederService {
-  async start(connectionOptions: ConnectionOptions, extraOptions: SeederExtraOptions) {
-    const seedShowCommand = new SeedShowCommand(connectionOptions, extraOptions)
-    const seedRunCommand = new SeedRunCommand(connectionOptions, extraOptions)
-    const seedCreateCommand = new SeedCreateCommand(connectionOptions, extraOptions)
+  async start(dataSourceOptions: DataSourceOptions, extraOptions: SeederExtraOptions) {
+    const seedShowCommand = new SeedShowCommand(dataSourceOptions, extraOptions)
+    const seedRunCommand = new SeedRunCommand(dataSourceOptions, extraOptions)
+    const seedCreateCommand = new SeedCreateCommand(dataSourceOptions, extraOptions)
 
     const commands = [seedShowCommand, seedRunCommand, seedCreateCommand]
 

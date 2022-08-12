@@ -5,7 +5,7 @@
 
 import { Logger } from "@nestjs/common"
 import { camelCase } from "lodash"
-import { Connection, ConnectionOptions, createConnection } from "typeorm"
+import { DataSource, DataSourceOptions } from "typeorm"
 import * as yargs from "yargs"
 import { CommandUtils } from "../CommandUtils"
 import { SeedExecutor } from "./seeder.executor"
@@ -17,7 +17,7 @@ import { SeedInterface } from "./seeder.types"
 export class SeedShowCommand implements yargs.CommandModule {
   command = "seed:show"
   describe = "Show all seeds and whether they have been run or not"
-  connectionOptions: ConnectionOptions
+  dataSourceOptions: DataSourceOptions
   aliases?: string | readonly string[]
   options: {
     dir?: string
@@ -26,37 +26,37 @@ export class SeedShowCommand implements yargs.CommandModule {
   }
 
   constructor(
-    connectionOptions: ConnectionOptions,
+    dataSourceOptions: DataSourceOptions,
     options: {
       dir?: string
       seeds: SeedInterface[]
       packageVersion: string
     },
   ) {
-    this.connectionOptions = connectionOptions
+    this.dataSourceOptions = dataSourceOptions
     this.options = options
   }
 
   builder = (args: yargs.Argv) => {
-    return args.option("connection", {
-      alias: "c",
-      default: "default",
-      describe: "Name of the connection on which run a query.",
+    return args.option("dataSource", {
+      alias: "d",
+      describe: "Path to the file where your DataSource instance is defined.",
+      demandOption: true,
     })
   }
 
   handler = async () => {
-    let connection: Connection | undefined = undefined
+    let dataSource: DataSource | undefined = undefined
 
     try {
-      connection = await createConnection(this.connectionOptions)
-      const seedExecutor = new SeedExecutor(connection)
+      dataSource = new DataSource(this.dataSourceOptions)
+      const seedExecutor = new SeedExecutor(dataSource)
 
       const unappliedSeeds = await seedExecutor.showSeeds(this.options.seeds)
-      await connection.close()
+      await dataSource.destroy()
       Logger.log(`Unapplied seeds: ${unappliedSeeds}`)
     } catch (err) {
-      if (connection) await connection.close()
+      if (dataSource) await dataSource.destroy()
       Logger.error("Error during seed show:")
       console.error(err)
     }
@@ -70,7 +70,7 @@ export class SeedRunCommand implements yargs.CommandModule {
   command = "seed:run"
   describe = "Runs all pending seeds."
   aliases = "seed:run"
-  connectionOptions: ConnectionOptions
+  dataSourceOptions: DataSourceOptions
   options: {
     dir?: string
     seeds: SeedInterface[]
@@ -78,23 +78,23 @@ export class SeedRunCommand implements yargs.CommandModule {
   }
 
   constructor(
-    connectionOptions: ConnectionOptions,
+    dataSourceOptions: DataSourceOptions,
     options: {
       dir?: string
       seeds: SeedInterface[]
       packageVersion: string
     },
   ) {
-    this.connectionOptions = connectionOptions
+    this.dataSourceOptions = dataSourceOptions
     this.options = options
   }
 
   builder = (args: yargs.Argv) => {
     return args
-      .option("connection", {
-        alias: "c",
-        default: "default",
-        describe: "Name of the connection on which run a query.",
+      .option("dataSource", {
+        alias: "d",
+        describe: "Path to the file where your DataSource instance is defined.",
+        // demandOption: true,
       })
       .option("transaction", {
         alias: "t",
@@ -104,12 +104,12 @@ export class SeedRunCommand implements yargs.CommandModule {
   }
 
   handler = async (args: yargs.Arguments) => {
-    let connection: Connection | undefined = undefined
+    let dataSource: DataSource | undefined = undefined
     try {
-      connection = await createConnection(this.connectionOptions)
-
+      dataSource = new DataSource(this.dataSourceOptions)
+      await dataSource.initialize()
       const options = {
-        transaction: this.connectionOptions.migrationsTransactionMode ?? ("all" as "all" | "none" | "each"),
+        transaction: this.dataSourceOptions.migrationsTransactionMode ?? ("all" as "all" | "none" | "each"),
       }
 
       switch (args.t) {
@@ -127,15 +127,15 @@ export class SeedRunCommand implements yargs.CommandModule {
         // noop
       }
 
-      const seedExecutor = new SeedExecutor(connection)
+      const seedExecutor = new SeedExecutor(dataSource)
 
       seedExecutor.transaction = (options && options.transaction) || "all"
 
       const successSeeds = await seedExecutor.executePendingSeeds(this.options.seeds, this.options.packageVersion)
       Logger.log(`Success Seeds: ${successSeeds.length}`)
-      await connection.close()
+      await dataSource.destroy()
     } catch (err) {
-      if (connection) await connection.close()
+      if (dataSource) await dataSource.destroy()
       Logger.error("Error during migration run:")
       console.error(err)
     }
@@ -149,7 +149,7 @@ export class SeedCreateCommand implements yargs.CommandModule {
   command = "seed:create"
   describe = "Creates a new seed file."
   aliases = "seed:create"
-  connectionOptions: ConnectionOptions
+  dataSourceOptions: DataSourceOptions
   options: {
     dir?: string
     seeds: SeedInterface[]
@@ -157,23 +157,23 @@ export class SeedCreateCommand implements yargs.CommandModule {
   }
 
   constructor(
-    connectionOptions: ConnectionOptions,
+    dataSourceOptions: DataSourceOptions,
     options: {
       dir?: string
       seeds: SeedInterface[]
       packageVersion: string
     },
   ) {
-    this.connectionOptions = connectionOptions
+    this.dataSourceOptions = dataSourceOptions
     this.options = options
   }
 
   builder = (args: yargs.Argv) => {
     return args
-      .option("c", {
-        alias: "connection",
-        default: "default",
-        describe: "Name of the connection on which run a query.",
+      .option("dataSource", {
+        alias: "d",
+        describe: "Path to the file where your DataSource instance is defined.",
+        demandOption: true,
       })
       .option("n", {
         alias: "name",
@@ -188,7 +188,7 @@ export class SeedCreateCommand implements yargs.CommandModule {
 
   handler = async (args: yargs.Arguments) => {
     try {
-      const timestamp = new Date().getTime()
+      const timestamp = CommandUtils.getTimestamp(args.timestamp)
       const fileContent = SeedCreateCommand.getTemplate(args.name as any, timestamp)
       const extension = ".ts"
       const filename = timestamp + "-" + args.name + extension
