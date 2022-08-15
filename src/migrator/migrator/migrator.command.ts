@@ -7,11 +7,11 @@
 import { Logger } from "@nestjs/common"
 import { format } from "@sqltools/formatter/lib/sqlFormatter"
 import { camelCase } from "lodash"
-import * as path from "path"
 import { DataSource, DataSourceOptions, QueryRunner } from "typeorm"
 import { PlatformTools } from "typeorm/platform/PlatformTools"
 import * as yargs from "yargs"
 import { CommandUtils } from "../CommandUtils"
+import { MigrationExtraOptions } from "./migrator.types"
 
 /**
  * Drops all tables of the database from the given connection.
@@ -29,11 +29,7 @@ export class SchemaDropCommand implements yargs.CommandModule {
   }
 
   builder = (args: yargs.Argv) => {
-    return args.option("dataSource", {
-      alias: "d",
-      describe: "Path to the file where your DataSource instance is defined.",
-      // demandOption: true,
-    })
+    return args
   }
 
   handler = async (_: yargs.Arguments) => {
@@ -74,16 +70,10 @@ export class QueryCommand implements yargs.CommandModule {
   }
 
   builder = (args: yargs.Argv) => {
-    return args
-      .positional("query", {
-        describe: "The SQL Query to run",
-        type: "string",
-      })
-      .option("dataSource", {
-        alias: "d",
-        describe: "Path to the file where your DataSource instance is defined.",
-        // demandOption: true,
-      })
+    return args.positional("query", {
+      describe: "The SQL Query to run",
+      type: "string",
+    })
   }
 
   handler = async (args: yargs.Arguments) => {
@@ -140,17 +130,11 @@ export class MigrationRunCommand implements yargs.CommandModule {
   }
 
   builder = (args: yargs.Argv) => {
-    return args
-      .option("dataSource", {
-        alias: "d",
-        describe: "Path to the file where your DataSource instance is defined.",
-        // demandOption: true,
-      })
-      .option("transaction", {
-        alias: "t",
-        default: "default",
-        describe: "Indicates if transaction should be used or not for migration run. Enabled by default.",
-      })
+    return args.option("transaction", {
+      alias: "t",
+      default: "default",
+      describe: "Indicates if transaction should be used or not for migration run. Enabled by default.",
+    })
   }
 
   handler = async (args: yargs.Arguments) => {
@@ -213,11 +197,7 @@ export class MigrationShowCommand implements yargs.CommandModule {
   }
 
   builder = (args: yargs.Argv) => {
-    return args.option("dataSource", {
-      alias: "d",
-      describe: "Path to the file where your DataSource instance is defined.",
-      // demandOption: true,
-    })
+    return args
   }
 
   handler = async (_: yargs.Arguments) => {
@@ -259,17 +239,11 @@ export class MigrationRevertCommand implements yargs.CommandModule {
   }
 
   builder = (args: yargs.Argv) => {
-    return args
-      .option("dataSource", {
-        alias: "d",
-        describe: "Path to the file where your DataSource instance is defined.",
-        // demandOption: true,
-      })
-      .option("transaction", {
-        alias: "t",
-        default: "default",
-        describe: "Indicates if transaction should be used or not for migration revert. Enabled by default.",
-      })
+    return args.option("transaction", {
+      alias: "t",
+      default: "default",
+      describe: "Indicates if transaction should be used or not for migration revert. Enabled by default.",
+    })
   }
 
   handler = async (args: yargs.Arguments) => {
@@ -320,18 +294,30 @@ export class MigrationRevertCommand implements yargs.CommandModule {
  * Creates a new migration file.
  */
 export class MigrationCreateCommand implements yargs.CommandModule {
-  command = "migration:create <path>"
+  command = "migration:create"
   describe = "Creates a new migration file."
   aliases = "migration:create"
 
   dataSourceOptions: DataSourceOptions
+  dir: string
 
-  constructor(dataSourceOptions: DataSourceOptions) {
+  constructor(dataSourceOptions: DataSourceOptions, options: MigrationExtraOptions) {
     this.dataSourceOptions = dataSourceOptions
+    this.dir = options.dir
   }
 
   builder = (args: yargs.Argv) => {
     return args
+      .option("n", {
+        alias: "name",
+        describe: "Name of the migration class.",
+        demandOption: true,
+        type: "string",
+      })
+      .option("d", {
+        alias: "dir",
+        describe: "Directory where migration should be created.",
+      })
       .option("o", {
         alias: "outputJs",
         type: "boolean",
@@ -349,20 +335,25 @@ export class MigrationCreateCommand implements yargs.CommandModule {
   handler = async (args: yargs.Arguments) => {
     try {
       const timestamp = CommandUtils.getTimestamp(args.timestamp)
+      const extension = args.outputJs ? ".js" : ".ts"
 
-      const inputPath = (args.path as string).startsWith("/")
-        ? (args.path as string)
-        : path.resolve(process.cwd(), args.path as string)
-      const filename = path.basename(inputPath)
-      const fullPath = path.dirname(inputPath) + "/" + timestamp + "-" + filename
+      const filename = timestamp + "-" + args.name + extension
+
+      let directory = (args.dir as string) || this.dir
+
+      if (directory && !directory.startsWith("/")) {
+        directory = process.cwd() + "/" + directory
+      }
+
+      const fullPath = (directory ? directory + "/" : "") + filename
 
       const fileContent = args.outputJs
-        ? MigrationCreateCommand.getJavascriptTemplate(filename, timestamp)
-        : MigrationCreateCommand.getTemplate(filename, timestamp)
+        ? MigrationCreateCommand.getJavascriptTemplate(args.name as string, timestamp)
+        : MigrationCreateCommand.getTemplate(args.name as string, timestamp)
 
-      await CommandUtils.createFile(fullPath + (args.outputJs ? ".js" : ".ts"), fileContent)
+      await CommandUtils.createFile(fullPath, fileContent)
 
-      Logger.log(`Migration ${fullPath + (args.outputJs ? ".js" : ".ts")} has been generated successfully.`)
+      Logger.log(`Migration ${fullPath} has been generated successfully.`)
     } catch (err) {
       PlatformTools.logCmdErr("Error during migration creation:", err)
     }
@@ -409,23 +400,29 @@ module.exports = class ${camelCase(name)}${timestamp} {
  * Generates a new migration file with sql needs to be executed to update schema.
  */
 export class MigrationGenerateCommand implements yargs.CommandModule {
-  command = "migration:generate <path>"
+  command = "migration:generate"
   describe = "Generates a new migration file with sql needs to be executed to update schema."
-  aliases = "migrations:generate"
+  aliases = "migration:generate"
 
   dataSourceOptions: DataSourceOptions
+  dir: string
 
-  constructor(dataSourceOptions: DataSourceOptions) {
+  constructor(dataSourceOptions: DataSourceOptions, options: MigrationExtraOptions) {
     this.dataSourceOptions = dataSourceOptions
+    this.dir = options.dir
   }
 
   builder = async (args: yargs.Argv) => {
     return args
-      .option("dataSource", {
-        alias: "d",
+      .option("n", {
+        alias: "name",
+        describe: "Name of the migration class.",
+        demandOption: true,
         type: "string",
-        describe: "Path to the file where your DataSource instance is defined.",
-        // demandOption: true,
+      })
+      .option("d", {
+        alias: "dir",
+        describe: "Directory where migration should be created.",
       })
       .option("p", {
         alias: "pretty",
@@ -463,10 +460,16 @@ export class MigrationGenerateCommand implements yargs.CommandModule {
   handler = async (args: yargs.Arguments) => {
     const timestamp = CommandUtils.getTimestamp(args.timestamp)
     const extension = args.outputJs ? ".js" : ".ts"
-    const fullPath = (args.path as string).startsWith("/")
-      ? (args.path as string)
-      : path.resolve(process.cwd(), args.path as string)
-    const filename = timestamp + "-" + path.basename(fullPath) + extension
+
+    const filename = timestamp + "-" + args.name + extension
+
+    let directory = (args.dir as string) || this.dir
+
+    if (directory && !directory.startsWith("/")) {
+      directory = process.cwd() + "/" + directory
+    }
+
+    const fullPath = (directory ? directory + "/" : "") + filename
 
     let dataSource: DataSource | undefined = undefined
 
@@ -526,14 +529,14 @@ export class MigrationGenerateCommand implements yargs.CommandModule {
           )
           process.exit(1)
         }
-      } else if (!args.path) {
-        Logger.warn("Please specify a migration path")
+      } else if (!args.name) {
+        Logger.warn("Please specify a migration name")
         process.exit(1)
       }
 
       const fileContent = args.outputJs
-        ? MigrationGenerateCommand.getJavascriptTemplate(path.basename(fullPath), timestamp, upSqls, downSqls.reverse())
-        : MigrationGenerateCommand.getTemplate(path.basename(fullPath), timestamp, upSqls, downSqls.reverse())
+        ? MigrationGenerateCommand.getJavascriptTemplate(args.name as string, timestamp, upSqls, downSqls.reverse())
+        : MigrationGenerateCommand.getTemplate(args.name as string, timestamp, upSqls, downSqls.reverse())
 
       if (args.check) {
         Logger.warn(`Unexpected changes in database schema were found in check mode:\n\n`, fileContent)
@@ -541,12 +544,11 @@ export class MigrationGenerateCommand implements yargs.CommandModule {
       }
 
       if (args.dryrun) {
-        Logger.log(`Migration ${fullPath + extension} has content:\n\n`, fileContent)
+        Logger.log(`Migration ${fullPath} has content:\n\n`, fileContent)
       } else {
-        const migrationFileName = path.dirname(fullPath) + "/" + filename
-        await CommandUtils.createFile(migrationFileName, fileContent)
+        await CommandUtils.createFile(fullPath, fileContent)
 
-        Logger.log(`Migration ${migrationFileName} has been generated successfully.`)
+        Logger.log(`Migration ${fullPath} has been generated successfully.`)
       }
     } catch (err) {
       PlatformTools.logCmdErr("Error during migration generation:", err)
