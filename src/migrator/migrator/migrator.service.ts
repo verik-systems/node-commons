@@ -13,17 +13,18 @@ import {
   QueryCommand,
   SchemaDropCommand,
 } from "./migrator.command"
+import { MigrationExtraOptions } from "./migrator.types"
 
 @Injectable()
 export class MigratorService {
-  async start(dataSourceOptions: DataSourceOptions) {
+  async start(dataSourceOptions: DataSourceOptions, extraOptions: MigrationExtraOptions) {
     const migrationQuery = new QueryCommand(dataSourceOptions)
     const migrationShow = new MigrationShowCommand(dataSourceOptions)
     const migrationRun = new MigrationRunCommand(dataSourceOptions)
     const migrationRevert = new MigrationRevertCommand(dataSourceOptions)
     const migrationDrop = new SchemaDropCommand(dataSourceOptions)
-    const migrationCreate = new MigrationCreateCommand(dataSourceOptions)
-    const migrationGenerate = new MigrationGenerateCommand(dataSourceOptions)
+    const migrationCreate = new MigrationCreateCommand(dataSourceOptions, extraOptions)
+    const migrationGenerate = new MigrationGenerateCommand(dataSourceOptions, extraOptions)
 
     const commands = [
       migrationQuery,

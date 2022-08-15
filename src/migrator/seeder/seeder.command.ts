@@ -38,11 +38,7 @@ export class SeedShowCommand implements yargs.CommandModule {
   }
 
   builder = (args: yargs.Argv) => {
-    return args.option("dataSource", {
-      alias: "d",
-      describe: "Path to the file where your DataSource instance is defined.",
-      demandOption: true,
-    })
+    return args
   }
 
   handler = async () => {
@@ -50,8 +46,8 @@ export class SeedShowCommand implements yargs.CommandModule {
 
     try {
       dataSource = new DataSource(this.dataSourceOptions)
+      await dataSource.initialize()
       const seedExecutor = new SeedExecutor(dataSource)
-
       const unappliedSeeds = await seedExecutor.showSeeds(this.options.seeds)
       await dataSource.destroy()
       Logger.log(`Unapplied seeds: ${unappliedSeeds}`)
@@ -90,17 +86,11 @@ export class SeedRunCommand implements yargs.CommandModule {
   }
 
   builder = (args: yargs.Argv) => {
-    return args
-      .option("dataSource", {
-        alias: "d",
-        describe: "Path to the file where your DataSource instance is defined.",
-        // demandOption: true,
-      })
-      .option("transaction", {
-        alias: "t",
-        default: "default",
-        describe: "Indicates if transaction should be used or not for seed run. Enabled by default.",
-      })
+    return args.option("transaction", {
+      alias: "t",
+      default: "default",
+      describe: "Indicates if transaction should be used or not for seed run. Enabled by default.",
+    })
   }
 
   handler = async (args: yargs.Arguments) => {
@@ -170,11 +160,6 @@ export class SeedCreateCommand implements yargs.CommandModule {
 
   builder = (args: yargs.Argv) => {
     return args
-      .option("dataSource", {
-        alias: "d",
-        describe: "Path to the file where your DataSource instance is defined.",
-        demandOption: true,
-      })
       .option("n", {
         alias: "name",
         describe: "Name of the seed class.",
