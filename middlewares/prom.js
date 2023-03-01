@@ -14,7 +14,7 @@ const defaultOptions = {
   gbMetricEnabled: false
 }
 
-let metric = {}
+const metric = {}
 
 /**
  * @param {!Array} buckets - array of numbers, representing the buckets for
@@ -295,7 +295,7 @@ function queryMetricsMiddleware (userOption = {}) {
     if (gauges[kind]) gauges[kind].set(inc)
   }
 
-  function updateConnectionRetryCounter(inc) {
+  function updateConnectionRetryCounter (inc) {
     queryCounter.inc(inc)
   }
 
@@ -311,7 +311,7 @@ function queryMetricsMiddleware (userOption = {}) {
  * @param prefix - metrics name prefix
  * webhook duration
  */
-  function webhookDurationGenerator (labelNames, buckets, prefix = '', kind) {
+function webhookDurationGenerator (labelNames, buckets, prefix = '', kind) {
   return new Prometheus.Histogram({
     name: `${prefix}webhook_${kind}_duration_seconds`,
     help: `Duration of webhook ${kind} in seconds`,
@@ -337,8 +337,6 @@ function webhookMetricsMiddleware (userOption = {}) {
   const originalLabels = ['route', 'method', 'status', 'host']
   options.customLabels = new Set([...originalLabels, ...options.customLabels])
   options.customLabels = [...options.customLabels]
-
-  const { normalizeStatus } = options
 
   const requestDurations = {}
   const requestCounts = {
@@ -372,16 +370,16 @@ function webhookMetricsMiddleware (userOption = {}) {
     })
   }
 
-  function updateDuration(kind, labels, inc) {
+  function updateDuration (kind, labels, inc) {
     if (requestDurations[kind]) requestDurations[kind].labels(labels).observe(inc)
     if (requestCounts[kind]) requestCounts[kind].labels(labels).inc(1)
   }
 
-  function updateCount(kind, labels, inc) {
+  function updateCount (kind, labels, inc) {
     if (requestCounts[kind]) requestCounts[kind].labels(labels).inc(inc)
   }
 
-  function updateRequestByteSize(labels, inc) {
+  function updateRequestByteSize (labels, inc) {
     requestSizeBytes.labels(labels).observe(inc)
   }
 
@@ -391,7 +389,6 @@ function webhookMetricsMiddleware (userOption = {}) {
     updateRequestByteSize
   }
 }
-  
 
 module.exports = {
   metricsMiddleware,
