@@ -9,7 +9,7 @@ export class VerikPrometheusInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req = context.switchToHttp().getRequest()
     context.switchToHttp().getRequest().prom = { route: req?.route?.path }
-
+    context.switchToHttp().getRequest().startTime = process.hrtime()
     return next.handle()
   }
 }
