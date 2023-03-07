@@ -1,9 +1,9 @@
 {
-  "editor.codeActionsOnSave": {
-    "source.fixAll": true,
-    "source.organizeImports": true
-  },
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "typescript.preferences.quoteStyle": "double",
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "eslint.codeActionsOnSave.rules": null,
+  "editor.formatOnSave": false,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.trailingComma": "all",
+  "prettier.semi": false,
+  "prettier.singleQuote": false,
+  "prettier.tabWidth": 2,
 }
