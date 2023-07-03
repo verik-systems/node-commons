@@ -1,4 +1,5 @@
 'use strict'
+const promClient = require('prom-client')
 
 module.exports = {
   middlewares: {
@@ -13,5 +14,6 @@ module.exports = {
     log: require('./libs/log'),
     promEnable: require('./libs/prom-enable'),
     promHandler: require('./libs/prom-handler')
-  }
+  },
+  promClient
 }
